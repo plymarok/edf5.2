@@ -20,7 +20,7 @@
   .topbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;
     padding:14px 18px;background:var(--panel);border-bottom:1px solid var(--border);box-shadow:var(--shadow)}
   .topbar h1{font-size:18px;margin:0}
-  .actions{display:flex;gap:10px;align-items:center}
+  .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   .btn{border-radius:10px;border:1px solid var(--border);background:var(--panel);color:var(--text);padding:10px 14px;cursor:pointer}
   .btn.primary{background:var(--accent);color:#fff;border-color:transparent}
   .btn.ghost{background:transparent}
@@ -44,6 +44,7 @@
   <div class="actions">
     <button id="exA" class="btn">Exemple (80%)</button>
     <button id="exB" class="btn">Exemple (70%)</button>
+    <button id="clear" class="btn">Vider le formulaire</button>
     <button id="theme" class="btn ghost">🌙/☀️</button>
   </div>
 </header>
@@ -132,8 +133,8 @@
   const asNum = v => (v===""||v==null)? NaN : Number(String(v).replace(",","."));
   const pctText = x => (x*100).toLocaleString("fr-FR",{maximumFractionDigits:2}).replace(/\u00a0/g," ");
 
-  // --- DESSIN dynamique (affiche même avec infos partielles)
-  function drawTimeline(ctx){
+  // --- DESSIN dynamique
+  function drawTimeline(){
     timelineHost.innerHTML="";
     const svgNS="http://www.w3.org/2000/svg";
     const svg=document.createElementNS(svgNS,"svg");
@@ -142,21 +143,20 @@
     svg.setAttribute("preserveAspectRatio","xMidYMid meet");
     timelineHost.appendChild(svg);
 
-    // Collecte de toutes les dates disponibles
     const marks=[];
-    function add(dateStr, label, idx, key){
+    function add(dateStr, label, idx){
       if(dateStr){
         const d=new Date(dateStr+"T00:00:00");
-        if(!isNaN(d)) marks.push({d,label,idx,key});
+        if(!isNaN(d)) marks.push({d,label,idx});
       }
     }
-    add(fStart.value,"Début période",null,"pStart");
-    add(fEnd.value,"Fin période",null,"pEnd");
-    add(dStart.value,"Fin N-1",asNum(iStart.value),"start");
-    add(dAP.value,"AP",asNum(iAP.value),"ap");
-    add(dEnd.value,"Anniversaire",asNum(iEnd.value),"end");
+    add(fStart.value,"Début période");
+    add(fEnd.value,"Fin période");
+    add(dStart.value,"Fin N-1",asNum(iStart.value));
+    add(dAP.value,"AP",asNum(iAP.value));
+    add(dEnd.value,"Anniversaire",asNum(iEnd.value));
 
-    if(marks.length<2){ // rien à dessiner de pertinent
+    if(marks.length<2){
       const p=document.createElement("div");
       p.className="muted small"; p.textContent="Saisis des dates : la ligne de vie se dessine automatiquement.";
       timelineHost.appendChild(p); return;
@@ -164,64 +164,56 @@
 
     marks.sort((a,b)=>a.d-b.d);
     const min=marks[0].d, max=marks[marks.length-1].d;
-    const span = Math.max(1, (max-min)); // éviter division par 0
-    const X=d=>40 + ((d-min)/span)*1020;
+    const span=Math.max(1,(max-min));
+    const X=d=>40+((d-min)/span)*1020;
 
-    // Fonctions SVG
     function node(tag,attrs){const n=document.createElementNS(svgNS,tag);for(const k in attrs)n.setAttribute(k,attrs[k]);svg.appendChild(n);return n;}
     function line(x1,y1,x2,y2,w,col){node("line",{x1,y1,x2,y2,stroke:col||"currentColor","stroke-width":w,"stroke-linecap":"round"});}
     function vmark(x){node("line",{x1:x,y1:70,x2:x,y2:110,stroke:"currentColor","stroke-width":3});}
-    function text(t,x,y,anchor="start",size=14,color="currentColor"){const n=node("text",{x,y,"text-anchor":anchor,"font-size":size,fill:color}); n.textContent=t;}
+    function text(t,x,y,anchor="start",size=14){const n=node("text",{x,y,"text-anchor":anchor,"font-size":size}); n.textContent=t;}
 
-    // Bande période de facturation si dispo
+    // Bande période si dispo
     if(fStart.value && fEnd.value){
       const x1=X(new Date(fStart.value+"T00:00:00")), x2=X(new Date(fEnd.value+"T00:00:00"));
-      node("rect",{x:Math.min(x1,x2), y:78, width:Math.abs(x2-x1), height:24, fill:"var(--accent-weak)", opacity:"0.6"});
-      text("Période de facturation", (x1+x2)/2, 68, "middle", 12);
+      node("rect",{x:Math.min(x1,x2),y:78,width:Math.abs(x2-x1),height:24,fill:"var(--accent-weak)",opacity:"0.6"});
+      text("Période de facturation",(x1+x2)/2,66,"middle",12);
     }
 
     // Ligne principale
     line(X(min),90,X(max),90,6,"#2a63e7");
 
-    // Marqueurs + libellés (dates & index)
+    // Marqueurs
     marks.forEach(m=>{
-      const x=X(m.d);
-      vmark(x);
-      text(fmt(m.d.toISOString().slice(0,10)), x, 36, "middle");
-      if(Number.isFinite(m.idx)) text(raw(m.idx), x, 140, "middle");
+      const x=X(m.d); vmark(x);
+      text(fmt(m.d.toISOString().slice(0,10)),x,36,"middle");
+      if(Number.isFinite(m.idx)) text(raw(m.idx),x,140,"middle");
     });
 
-    // Libellés segments si on peut
-    const hasStart = dStart.value && dAP.value;
-    const hasEnd   = dAP.value && dEnd.value;
-    if(hasStart){
+    // Libellés segments si possible
+    if(dStart.value && dAP.value){
       const xs=X(new Date(dStart.value+"T00:00:00")), xa=X(new Date(dAP.value+"T00:00:00"));
-      text("100 % père (avant AP)", (xs+xa)/2, 168, "middle");
+      text("100 % père (avant AP)",(xs+xa)/2,168,"middle");
     }
-    if(hasEnd){
+    if(dAP.value && dEnd.value){
       const xa=X(new Date(dAP.value+"T00:00:00")), xe=X(new Date(dEnd.value+"T00:00:00"));
-      const k=asNum(coef.value); if(Number.isFinite(k)) text(`${pctText(k)} % père (après AP)`, (xa+xe)/2, 168, "middle");
+      const k=asNum(coef.value); if(Number.isFinite(k)) text(`${pctText(k)} % père (après AP)`,(xa+xe)/2,168,"middle");
     }
   }
 
-  // --- CALCULS + BAP (normé)
+  // --- CALCULS + BAP
   function compute(){
+    drawTimeline(); // toujours dessiner dynamique
+
     const S=asNum(iStart.value), A=asNum(iAP.value), E=asNum(iEnd.value);
     const ds=dStart.value, da=dAP.value, de=dEnd.value;
     const k=asNum(coef.value);
 
-    // Dessiner quoi qu'il arrive (progressif)
-    drawTimeline({});
-
-    // Si tous les champs nécessaires sont là, calculer + BAP
     const ready = ds && da && de && Number.isFinite(S) && Number.isFinite(A) && Number.isFinite(E) && (k>=0 && k<=1);
     if(!ready){
       q1El.textContent=q2El.textContent=afterFatherEl.textContent=afterChildEl.textContent=fatherTotalEl.textContent="—";
       checks.textContent="Complète les 3 jalons (dates + index) et le coef pour calculer.";
       bap.value=""; return;
     }
-
-    // Validations simples d'ordre
     if(!(new Date(ds)<=new Date(da) && new Date(da)<=new Date(de)) || S>A || A>E){
       q1El.textContent=q2El.textContent=afterFatherEl.textContent=afterChildEl.textContent=fatherTotalEl.textContent="—";
       checks.textContent="KO : vérifie l’ordre des dates et des index (fin N-1 ≤ AP ≤ anniversaire ; index croissants).";
@@ -239,18 +231,16 @@
     afterChildEl.textContent=i18n(childAfter);
     fatherTotalEl.textContent=i18n(fatherTotal);
 
-    const ok1 = (fatherAfter+childAfter===q2);
-    const ok2 = ((E-S)===(q1+q2));
+    const ok1=(fatherAfter+childAfter===q2), ok2=((E-S)===(q1+q2));
     checks.innerHTML=`${ok1?"✅":"❌"} (père après + fils après = Q_après) • ${ok2?"✅":"❌"} (Q_avant + Q_après = Δindex)`;
 
-    // BAP strictement normé (comme ton modèle)
-    const coefPct = pctText(k);
+    const coefPct=pctText(k);
     let line = `BAP : augmentation de puissance au ${fmt(da)} avec un index de ${raw(A)} ` +
                `soit avant augmentation de puissance : ${raw(A)} - ${raw(S)} = ${raw(q1)} ` +
                `+ après augmentation de puissance : ${raw(E)} - ${raw(A)} = ${raw(q2)} x ${coefPct} % = ${raw(fatherAfter)} ` +
                `=> quantité attendue de la facture = ${raw(q1)} + ${raw(fatherAfter)}`;
 
-    const pStr=(price.value||"").trim(); const pNum=asNum(pStr);
+    const pStr=(price.value||"").trim(), pNum=asNum(pStr);
     if(pStr && Number.isFinite(pNum)){
       const amount=(fatherTotal*pNum).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2});
       line += ` soit ${raw(fatherTotal)} x ${pStr} = ${amount}€`;
@@ -258,7 +248,7 @@
     bap.value=line;
   }
 
-  // Ecouteurs (tout déclenche un redraw dynamique)
+  // Écouteurs
   [fStart,fEnd,dStart,iStart,dAP,iAP,dEnd,iEnd,coef,price].forEach(el=>el.addEventListener('input', compute));
 
   // Exemples
@@ -277,13 +267,23 @@
     coef.value="0.70"; price.value=""; compute();
   };
 
+  // Vider le formulaire
+  document.getElementById('clear').onclick=()=>{
+    [fStart,fEnd,dStart,iStart,dAP,iAP,dEnd,iEnd,coef,price].forEach(el=>el.value="");
+    // Réinitialise les affichages
+    q1El.textContent=q2El.textContent=afterFatherEl.textContent=afterChildEl.textContent=fatherTotalEl.textContent="—";
+    checks.textContent="Saisis les jalons et le coef pour obtenir le calcul.";
+    bap.value="";
+    drawTimeline(); // affiche l’état vierge
+  };
+
   // Copier BAP
   document.getElementById('copy').onclick=()=>{
     bap.select(); document.execCommand('copy');
     const btn=document.getElementById('copy'); btn.textContent="Copié ✓"; setTimeout(()=>btn.textContent="Copier le BAP",900);
   };
 
-  // Init
+  // Init avec un exemple
   document.getElementById('exA').click();
 </script>
 </body>
