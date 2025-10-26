@@ -26,16 +26,16 @@
   .btn.primary{background:var(--accent);color:#fff;border-color:transparent}
   .btn.ghost{background:transparent}
 
-  /* Onglets (haut) */
   .tabs{display:flex;gap:8px;margin:16px auto;max-width:1100px;padding:0 18px}
   .tab{padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:var(--panel);cursor:pointer}
   .tab.active{background:var(--accent);color:#fff;border-color:transparent}
 
-  /* Contenu */
   .container{max-width:1100px;margin:0 auto 24px;padding:0 18px;display:grid;gap:18px}
   .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px 16px 20px;box-shadow:var(--shadow)}
   .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
-  .row{display:grid;grid-template-columns:230px 1fr;gap:10px;align-items:center;margin:8px 0}
+  .row{display:grid;grid-template-columns:260px 1fr;gap:10px;align-items:center;margin:8px 0}
+  .help{grid-column:1/-1;margin:-4px 0 6px 260px;font-size:12px;color:var(--muted)}
+  .section{margin-top:14px}
   .control{background:transparent;border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);width:100%}
   .control:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-weak)}
   .muted{color:var(--muted)} .mono{font-variant-numeric:tabular-nums}
@@ -44,7 +44,6 @@
   .chroniqueLive h4{margin:6px 0 8px} .chroniqueLive p{margin:6px 0}
   .chip{display:inline-block;background:var(--accent-weak);padding:2px 8px;border-radius:999px}
 
-  /* Timeline & histogramme */
   svg.timeline{width:100%;height:220px}
   .mini-tabs{display:flex;gap:8px;margin:10px 0}
   .mini-tab{padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--panel);cursor:pointer;font-size:14px}
@@ -55,47 +54,48 @@
   .swatch{width:12px;height:12px;border-radius:3px;display:inline-block}
   .sw-pere{background:var(--col-pere)} .sw-fils{background:var(--col-fils)} .sw-petit{background:var(--col-petit)}
 
-  /* Panneaux d’onglet */
   .tab-panel{display:none}
   .tab-panel.active{display:grid}
 </style>
 </head>
 <body>
 <header class="topbar">
-  <h1>Calcul normé — Augmentations de puissance</h1>
+  <h1>Calcul normé — Augmentations de puissance (père, fils, petit-fils)</h1>
   <div class="actions">
     <button id="theme" class="btn ghost" type="button">🌙/☀️</button>
   </div>
 </header>
 
 <nav class="tabs">
-  <button class="tab active" data-panel="pf1" type="button">Père & Fils (1 AP)</button>
-  <button class="tab" data-panel="pf2" type="button">Père, Fils & Petit-fils (2 AP)</button>
+  <button class="tab active" data-panel="pf1" type="button">Père & Fils — 1 AP</button>
+  <button class="tab" data-panel="pf2" type="button">Père, Fils & Petit-fils — 2 AP</button>
 </nav>
 
 <!-- =================== ONGLET 1 : PÈRE & FILS (1 AP) =================== -->
 <main id="pf1" class="container tab-panel active">
   <section class="panel">
-    <h3>1) Renseigne le cas — Père & Fils (1 AP)</h3>
+    <h3>1) Renseigner le cas — Père & Fils (1 seule augmentation)</h3>
     <div class="grid">
       <div>
         <h4>Période de facturation</h4>
-        <div class="row"><label>Début</label><input id="fStart1" type="date" class="control"></div>
-        <div class="row"><label>Fin</label><input id="fEnd1" type="date" class="control"></div>
+        <div class="row"><label>Début de période</label><input id="fStart1" type="date" class="control"></div>
+        <div class="row"><label>Fin de période</label><input id="fEnd1" type="date" class="control"></div>
+        <p class="help">C’est la période réelle de la facture que tu traites.</p>
 
-        <h4 style="margin-top:12px">Jalons d’index</h4>
-        <div class="row"><label>Fin N-1</label><input id="dStart1" type="date" class="control"></div>
-        <div class="row"><label>Index fin N-1</label><input id="iStart1" type="number" step="1" class="control" placeholder="ex. 0"></div>
-        <div class="row"><label>Date d’AP</label><input id="dAP1" type="date" class="control"></div>
-        <div class="row"><label>Index AP</label><input id="iAP1" type="number" step="1" class="control" placeholder="ex. 1715"></div>
-        <div class="row"><label>Anniversaire</label><input id="dEnd1" type="date" class="control"></div>
-        <div class="row"><label>Index anniversaire</label><input id="iEnd1" type="number" step="1" class="control" placeholder="ex. 3112"></div>
+        <h4 class="section">Repères d’index (père)</h4>
+        <div class="row"><label>Fin de facture précédente (N-1)</label><input id="dStart1" type="date" class="control"></div>
+        <div class="row"><label>Index au N-1 (père)</label><input id="iStart1" type="number" step="1" class="control" placeholder="ex. 12 000"></div>
+        <div class="row"><label>Date d’augmentation (AP)</label><input id="dAP1" type="date" class="control"></div>
+        <div class="row"><label>Index le jour d’AP</label><input id="iAP1" type="number" step="1" class="control" placeholder="ex. 18 450"></div>
+        <div class="row"><label>Date anniversaire (1re facture après AP)</label><input id="dEnd1" type="date" class="control"></div>
+        <div class="row"><label>Index à l’anniversaire</label><input id="iEnd1" type="number" step="1" class="control" placeholder="ex. 25 380"></div>
 
-        <h4 style="margin-top:12px">Coefficients</h4>
-        <div class="row"><label>Coef père après AP</label><input id="coef1" type="number" step="0.01" min="0" max="1" class="control" placeholder="0.70 = 70 %"></div>
+        <h4 class="section">Répartition après AP</h4>
+        <div class="row"><label>Part du père (après AP)</label><input id="coef1" type="number" step="0.01" min="0" max="1" class="control" placeholder="ex. 0.70 = 70 %"></div>
+        <p class="help">Avant l’AP, le père prend 100 % de la production. Après l’AP, on applique ce coefficient.</p>
 
-        <div class="row"><label>Prix (€/kWh) <span class="muted">(optionnel)</span></label>
-          <input id="price1" type="text" class="control" placeholder="0.10">
+        <div class="row"><label>Prix (€/kWh) <span class="muted">(facultatif)</span></label>
+          <input id="price1" type="text" class="control" placeholder="ex. 0.10">
         </div>
 
         <div style="display:flex;gap:8px;margin-top:10px">
@@ -106,7 +106,7 @@
       </div>
 
       <div>
-        <h4>Chronique (résumé en temps réel)</h4>
+        <h4>Chronique — explication en temps réel</h4>
         <div id="chroniqueLive1" class="chroniqueLive"></div>
       </div>
     </div>
@@ -114,11 +114,11 @@
   </section>
 
   <section class="panel">
-    <h3>2) BAP — Commentaire normé</h3>
+    <h3>2) BAP — Commentaire normé (prêt à copier)</h3>
     <textarea id="bap1" class="mono" readonly></textarea>
     <div style="display:flex;gap:10px;margin-top:8px">
       <button id="copy1" class="btn primary" type="button">Copier le BAP</button>
-      <span class="muted">Tolérance ± 1 kWh • Arrondi part père</span>
+      <span class="muted">Tolérance ± 1 kWh • Arrondi sur la part père</span>
     </div>
   </section>
 </main>
@@ -126,47 +126,50 @@
 <!-- =================== ONGLET 2 : PÈRE, FILS & PETIT-FILS (2 AP) =================== -->
 <main id="pf2" class="container tab-panel">
   <section class="panel">
-    <h3>1) Renseigne le cas — Père, Fils & Petit-fils (2 AP)</h3>
+    <h3>1) Renseigner le cas — Père, Fils & Petit-fils (deux augmentations)</h3>
     <div class="grid">
       <div>
         <h4>Période de facturation</h4>
-        <div class="row"><label>Début</label><input id="fStart2" type="date" class="control"></div>
-        <div class="row"><label>Fin</label><input id="fEnd2" type="date" class="control"></div>
+        <div class="row"><label>Début de période</label><input id="fStart2" type="date" class="control"></div>
+        <div class="row"><label>Fin de période</label><input id="fEnd2" type="date" class="control"></div>
+        <p class="help">Période réelle couverte par la facture.</p>
 
-        <h4 style="margin-top:12px">Jalons d’index</h4>
-        <div class="row"><label>Fin N-1</label><input id="dStart2" type="date" class="control"></div>
-        <div class="row"><label>Index fin N-1</label><input id="iStart2" type="number" step="1" class="control"></div>
+        <h4 class="section">Repères d’index (père)</h4>
+        <div class="row"><label>Fin de facture précédente (N-1)</label><input id="dStart2" type="date" class="control"></div>
+        <div class="row"><label>Index au N-1 (père)</label><input id="iStart2" type="number" step="1" class="control" placeholder="ex. 5 000"></div>
 
-        <div class="row"><label>Date AP1</label><input id="dAP21" type="date" class="control"></div>
-        <div class="row"><label>Index AP1</label><input id="iAP21" type="number" step="1" class="control"></div>
+        <div class="row"><label>AP1 — Date d’entrée du fils</label><input id="dAP21" type="date" class="control"></div>
+        <div class="row"><label>Index le jour d’AP1</label><input id="iAP21" type="number" step="1" class="control" placeholder="ex. 6 200"></div>
 
-        <div class="row"><label>Date AP2</label><input id="dAP22" type="date" class="control"></div>
-        <div class="row"><label>Index AP2</label><input id="iAP22" type="number" step="1" class="control"></div>
+        <div class="row"><label>AP2 — Date d’entrée du petit-fils</label><input id="dAP22" type="date" class="control"></div>
+        <div class="row"><label>Index le jour d’AP2</label><input id="iAP22" type="number" step="1" class="control" placeholder="ex. 9 100"></div>
 
-        <div class="row"><label>Anniversaire</label><input id="dEnd2" type="date" class="control"></div>
-        <div class="row"><label>Index anniversaire</label><input id="iEnd2" type="number" step="1" class="control"></div>
+        <div class="row"><label>Date anniversaire (1re facture après AP2)</label><input id="dEnd2" type="date" class="control"></div>
+        <div class="row"><label>Index à l’anniversaire</label><input id="iEnd2" type="number" step="1" class="control" placeholder="ex. 11 200"></div>
 
-        <h4 style="margin-top:12px">Coefficients</h4>
-        <div class="row"><label>AP1→AP2 : coef père</label><input id="coef21_pere" type="number" step="0.01" min="0" max="1" class="control" placeholder="0.70"></div>
-        <div class="row"><label>Après AP2 : père</label><input id="coef22_pere" type="number" step="0.01" min="0" max="1" class="control" placeholder="0.60"></div>
-        <div class="row"><label>Après AP2 : fils</label><input id="coef22_fils" type="number" step="0.01" min="0" max="1" class="control" placeholder="0.25"></div>
-        <div class="row"><label>Après AP2 : petit-fils</label><input id="coef22_petit" type="number" step="0.01" min="0" max="1" class="control" placeholder="0.15"></div>
+        <h4 class="section">Répartition par scénario</h4>
+        <div class="row"><label>Entre AP1 et AP2 — part du père</label><input id="coef21_pere" type="number" step="0.01" min="0" max="1" class="control" placeholder="ex. 0.70 = 70 %"></div>
+        <p class="help">Dans cette période, le couple <b>père / fils</b> se partage la production (père = x %, fils = 100 − x %).</p>
 
-        <div class="row"><label>Prix (€/kWh) <span class="muted">(optionnel)</span></label><input id="price2" type="text" class="control" placeholder="0.10"></div>
+        <div class="row"><label>Après AP2 — part du père</label><input id="coef22_pere" type="number" step="0.01" min="0" max="1" class="control" placeholder="ex. 0.60 = 60 %"></div>
+        <div class="row"><label>Après AP2 — part du fils</label><input id="coef22_fils" type="number" step="0.01" min="0" max="1" class="control" placeholder="ex. 0.25 = 25 %"></div>
+        <div class="row"><label>Après AP2 — part du petit-fils</label><input id="coef22_petit" type="number" step="0.01" min="0" max="1" class="control" placeholder="ex. 0.15 = 15 %"></div>
+        <p class="help">Après AP2, <b>les trois parts doivent totaliser 100 %</b> (père + fils + petit-fils = 1.00).</p>
+
+        <div class="row"><label>Prix (€/kWh) <span class="muted">(facultatif)</span></label><input id="price2" type="text" class="control" placeholder="ex. 0.10"></div>
 
         <div style="display:flex;gap:8px;margin-top:10px">
-          <button id="ex2" class="btn" type="button">Exemple 2 AP</button>
+          <button id="ex2" class="btn" type="button">Charger un exemple</button>
           <button id="clear2" class="btn" type="button">Vider</button>
         </div>
       </div>
 
       <div>
-        <h4>Chronique (résumé en temps réel)</h4>
+        <h4>Chronique — explication en temps réel</h4>
         <div id="chroniqueLive2" class="chroniqueLive"></div>
       </div>
     </div>
 
-    <!-- Mini-onglets de visualisation -->
     <div class="mini-tabs">
       <button class="mini-tab active" data-viz="time2" type="button">Ligne de vie</button>
       <button class="mini-tab" data-viz="stack2" type="button">Histogramme par segment</button>
@@ -182,11 +185,11 @@
   </section>
 
   <section class="panel">
-    <h3>2) BAP — Commentaire normé</h3>
+    <h3>2) BAP — Commentaire normé (prêt à copier)</h3>
     <textarea id="bap2" class="mono" readonly></textarea>
     <div style="display:flex;gap:10px;margin-top:8px">
       <button id="copy2" class="btn primary" type="button">Copier le BAP</button>
-      <span class="muted">Après AP2, les 3 coefficients doivent sommer 1</span>
+      <span class="muted">Après AP2, les 3 parts doivent faire 100 %</span>
     </div>
   </section>
 </main>
@@ -226,7 +229,7 @@ function guessPeriodLabel(a,b){
   return `période de ${d} jours`;
 }
 
-/* Timeline robuste (pas de toISOString) */
+/* Timeline (responsive, robuste) */
 function drawTimeline(host, marks){
   host.innerHTML="";
   const svgNS="http://www.w3.org/2000/svg";
@@ -258,7 +261,6 @@ function drawTimeline(host, marks){
     label("Période de facturation",(x1+x2)/2,66,"middle",12);
   }
 
-  // Axe
   N("line",{x1:X(valid[0].d.getTime()),y1:90,x2:X(valid[valid.length-1].d.getTime()),y2:90,stroke:"#2a63e7","stroke-width":6,"stroke-linecap":"round"});
 
   valid.forEach(m=>{
@@ -283,36 +285,31 @@ function renderChroniqueLive(values){
   const L = [];
   if (FS && FE) {
     L.push(`<h4>Le cadre</h4>
-       <p>Rideau levé sur la <span class="chip">${guessPeriodLabel(FS,FE)}</span> :
-       du <b>${fmtDate(FS)}</b> au <b>${fmtDate(FE)}</b>, c’est dans cet intervalle que se joue la répartition
-       entre <i>père</i> et <i>fils</i>.</p>`);
+       <p>Tu traites une <span class="chip">${guessPeriodLabel(FS,FE)}</span> :
+       du <b>${fmtDate(FS)}</b> au <b>${fmtDate(FE)}</b>. La production est d’abord 100 % père, puis ventilée après l’AP.</p>`);
   } else {
-    L.push(`<h4>Le cadre</h4><p class="muted">Indique le début et la fin de la facture : je poserai ensuite les jalons et déroulerai le calcul.</p>`);
+    L.push(`<h4>Le cadre</h4><p class="muted">Indique le début et la fin de la facture ; on posera ensuite les repères.</p>`);
   }
   const jalons = [];
-  if (ds) jalons.push(`à la <b>clôture précédente</b> (${fmtDate(ds)}), l’index du père est <b>${Number.isFinite(S)?String(S):"?"}</b> kWh`);
-  if (da) jalons.push(`le <b>jour de l’AP</b> (${fmtDate(da)}), on relève <b>${Number.isFinite(A)?String(A):"?"}</b> kWh`);
-  if (de) jalons.push(`à la <b>date anniversaire</b> (${fmtDate(de)}), l’index affiche <b>${Number.isFinite(E)?String(E):"?"}</b> kWh`);
-  L.push(jalons.length ? `<p>Trois repères structurent l’histoire : ${jalons.join(" ; ")}.</p>` : `<p class="muted">J’attends les trois repères : fin N-1 → AP → anniversaire.</p>`);
+  if (ds) jalons.push(`à la <b>clôture précédente (N-1)</b> (${fmtDate(ds)}) : <b>${Number.isFinite(S)?String(S):"?"}</b> kWh`);
+  if (da) jalons.push(`le <b>jour de l’AP</b> (${fmtDate(da)}) : <b>${Number.isFinite(A)?String(A):"?"}</b> kWh`);
+  if (de) jalons.push(`à la <b>date anniversaire</b> (${fmtDate(de)}) : <b>${Number.isFinite(E)?String(E):"?"}</b> kWh`);
+  L.push(jalons.length ? `<p>Repères : ${jalons.join(" • ")}.</p>` : `<p class="muted">Repères attendus : N-1 → AP → Anniversaire.</p>`);
   if (da && de) {
     if (k >= 0 && k <= 1) {
-      L.push(`<p>À compter de l’AP, la production se partage avec constance :
-         <b>${pctText(k)} %</b> au père et <b>${pctText(1-k)} %</b> au fils.
-         Avant cette date, le père est seul à bord.</p>`);
+      L.push(`<p>Après l’AP, la ventilation est de <b>${pctText(k)} %</b> au père et <b>${pctText(1-k)} %</b> au fils.</p>`);
     } else {
-      L.push(`<p class="muted">Renseigne le <b>coefficient du père</b> après AP (entre 0 et 1) pour ventiler correctement.</p>`);
+      L.push(`<p class="muted">Saisis la part du père après AP (entre 0 et 1). Avant AP : 100 % père.</p>`);
     }
   }
   if (ready) {
-    L.push(`<h4>Ce que disent les compteurs</h4>
-       <p>De la fin N-1 à l’AP : <b>${A} − ${S} = ${q1} kWh</b> intégralement au père.</p>
-       <p>De l’AP à l’anniversaire : <b>${E} − ${A} = ${q2} kWh</b>, ventilés en
-       <b>${fatherAfter} kWh</b> (père) et <b>${childAfter} kWh</b> (fils).</p>
-       <p><b>Verdict pour le père :</b> <b>${fatherTotal} kWh</b> attendus sur la facture.</p>`);
-    L.push(`<p>${ok1 ? "✅" : "❌"} Les parts <i>père</i> et <i>fils</i> recomposent bien <i>Q_après</i> ;
-       ${ok2 ? "✅" : "❌"} <i>Q_avant + Q_après</i> recolle exactement à <i>Δindex</i>.</p>`);
+    L.push(`<h4>Calcul clair</h4>
+       <p>Avant AP : <b>${A} − ${S} = ${q1} kWh</b> (100 % père).</p>
+       <p>Après AP : <b>${E} − ${A} = ${q2} kWh</b> → père <b>${fatherAfter}</b> • fils <b>${childAfter}</b>.</p>
+       <p><b>Part père attendue :</b> <b>${fatherTotal} kWh</b>.</p>
+       <p>${ok1 ? "✅" : "❌"} Les parts recomposent bien Q_après • ${ok2 ? "✅" : "❌"} Q_avant + Q_après = Δindex.</p>`);
   } else if (ds && da && de && !validOrder) {
-    L.push(`<p class="ko">⚠ Ordre : <b>fin N-1 ≤ AP ≤ anniversaire</b> et index croissants requis.</p>`);
+    L.push(`<p class="muted">⚠ Ordre requis : <b>N-1 ≤ AP ≤ Anniversaire</b> et index croissants.</p>`);
   }
   chroniqueLive.innerHTML = L.join("");
 }
@@ -346,9 +343,9 @@ function compute1(){
 
   const coefPct=pctText(k);
   if(ready){
-    let line = `BAP : augmentation de puissance au ${fmtDate(da)} (index ${raw(A)}) ` +
-               `; avant AP : ${raw(A)} - ${raw(S)} = ${raw(q1)} ` +
-               `; après AP : ${raw(E)} - ${raw(A)} = ${raw(q2)} × ${coefPct} % = ${raw(fatherAfter)} ` +
+    let line = `BAP : augmentation de puissance au ${fmtDate(da)} (index ${raw(A)}) ; ` +
+               `avant AP : ${raw(A)} - ${raw(S)} = ${raw(q1)} ; ` +
+               `après AP : ${raw(E)} - ${raw(A)} = ${raw(q2)} × ${coefPct} % = ${raw(fatherAfter)} ` +
                `⇒ quantité attendue (père) = ${raw(q1)} + ${raw(fatherAfter)}`;
     const pStr=(price1.value||"").trim(), pNum=asNum(pStr);
     if(pStr && Number.isFinite(pNum)){
@@ -376,7 +373,6 @@ const timeline2=document.getElementById('timeline2'), bap2=document.getElementBy
 const chrono2=document.getElementById('chroniqueLive2');
 const bars2=document.getElementById('timeline2bars');
 
-/* mini-tabs viz PF2 */
 document.querySelectorAll('.mini-tab').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     document.querySelectorAll('.mini-tab').forEach(b=>b.classList.remove('active'));
@@ -394,71 +390,62 @@ function renderChroniqueLive2(v){
   const L=[];
   if (FS && FE){
     L.push(`<h4>Le cadre</h4>
-      <p>Du <b>${fmtDate(FS)}</b> au <b>${fmtDate(FE)}</b> — une <span class="chip">${guessPeriodLabel(FS,FE)}</span> avec deux jalons d’AP (AP1 puis AP2).</p>`);
+      <p>Période traitée : <b>${fmtDate(FS)}</b> → <b>${fmtDate(FE)}</b> (<span class="chip">${guessPeriodLabel(FS,FE)}</span>), avec deux augmentations : AP1 (entrée du fils) puis AP2 (entrée du petit-fils).</p>`);
   } else {
-    L.push(`<h4>Le cadre</h4><p class="muted">Renseigne le début et la fin de période.</p>`);
+    L.push(`<h4>Le cadre</h4><p class="muted">Renseigne la période de la facture.</p>`);
   }
 
   const R=[];
-  if (ds)  R.push(`fin N-1 ${fmtDate(ds)} : <b>${Number.isFinite(S)?S:"?"}</b>`);
+  if (ds)  R.push(`N-1 ${fmtDate(ds)} : <b>${Number.isFinite(S)?S:"?"}</b>`);
   if (da1) R.push(`AP1 ${fmtDate(da1)} : <b>${Number.isFinite(A1)?A1:"?"}</b>`);
   if (da2) R.push(`AP2 ${fmtDate(da2)} : <b>${Number.isFinite(A2)?A2:"?"}</b>`);
-  if (de)  R.push(`anniv. ${fmtDate(de)} : <b>${Number.isFinite(E)?E:"?"}</b>`);
-  L.push(R.length?`<p>Repères : ${R.join(" • ")}.</p>`:`<p class="muted">Repères attendus : fin N-1 → AP1 → AP2 → anniversaire.</p>`);
+  if (de)  R.push(`Anniv. ${fmtDate(de)} : <b>${Number.isFinite(E)?E:"?"}</b>`);
+  L.push(R.length?`<p>Repères index : ${R.join(" • ")}.</p>`:`<p class="muted">Repères attendus : N-1 → AP1 → AP2 → Anniversaire.</p>`);
 
-  if (da1 && da2) L.push(`<p><b>Segment 2 (AP1→AP2)</b> : père <b>${pctText(k1)} %</b>, fils <b>${pctText(1-k1)} %</b>.</p>`);
+  if (da1 && da2) L.push(`<p><b>Entre AP1 et AP2</b> : père <b>${pctText(k1)} %</b> • fils <b>${pctText(1-k1)} %</b>.</p>`);
   if (de){
     if (coefsOK2){
-      L.push(`<p><b>Segment 3 (après AP2)</b> : père <b>${pctText(k2p)} %</b> • fils <b>${pctText(k2f)} %</b> • petit-fils <b>${pctText(k2c)} %</b> — somme <b>100 %</b>.</p>`);
+      L.push(`<p><b>Après AP2</b> : père <b>${pctText(k2p)} %</b> • fils <b>${pctText(k2f)} %</b> • petit-fils <b>${pctText(k2c)} %</b> (100 % au total).</p>`);
     } else {
-      L.push(`<p class="muted">Après AP2, indique trois coefficients dans [0,1] qui somment 1.</p>`);
+      L.push(`<p class="muted">Après AP2, renseigne 3 parts (père/fils/petit-fils) qui totalisent 100 %.</p>`);
     }
   }
 
   if (ready){
-    L.push(`<h4>Décomposition</h4>
-      <p><b>S1</b> — Avant AP1 : ${A1} − ${S} = <b>${q1} kWh</b> (100 % père).</p>
-      <p><b>S2</b> — AP1 → AP2 : ${A2} − ${A1} = <b>${q2} kWh</b> → père <b>${p1}</b> • fils <b>${c1}</b>.</p>
-      <p><b>S3</b> — Après AP2 : ${E} − ${A2} = <b>${q3} kWh</b> → père <b>${p2}</b> • fils <b>${c2}</b> • petit-fils <b>${g2}</b>.</p>
-      <p><b>Total père attendu :</b> <b>${totP} kWh</b>.</p>
+    L.push(`<h4>Calcul clair</h4>
+      <p>Avant AP1 : <b>${A1} − ${S} = ${q1} kWh</b> (100 % père).</p>
+      <p>AP1 → AP2 : <b>${A2} − ${A1} = ${q2} kWh</b> → père <b>${p1}</b> • fils <b>${c1}</b>.</p>
+      <p>Après AP2 : <b>${E} − ${A2} = ${q3} kWh</b> → père <b>${p2}</b> • fils <b>${c2}</b> • petit-fils <b>${g2}</b>.</p>
+      <p><b>Part père attendue :</b> <b>${totP} kWh</b>.</p>
       <p>${okSeg2?"✅":"❌"} S2 : parts = Q₂ • ${okSeg3?"✅":"❌"} S3 : parts = Q₃ • ${okDelta?"✅":"❌"} S1+S2+S3 = Δindex.</p>`);
 
-    /* ===== Résumé littéraire final ===== */
     const repS2 = `${pctText(k1)} % au père et ${pctText(1 - k1)} % au fils`;
     const repS3 = `${pctText(k2p)} % au père, ${pctText(k2f)} % au fils, ${pctText(k2c)} % au petit-fils`;
 
     L.push(
       `<h4>Résumé</h4>
-       <p>Sur la <span class="chip">${guessPeriodLabel(FS, FE)}</span>, deux événements jalonnent la vie du contrat :
-       <b>AP1 le ${fmtDate(da1)}</b> (index ${A1}) fait entrer le <i>fils</i>. 
-       De cette date jusqu’à <b>AP2 le ${fmtDate(da2)}</b> (index ${A2}), la production est ventilée ${repS2}.
-       <b>AP2</b> marque ensuite l’arrivée du <i>petit-fils</i> : d’AP2 à l’anniversaire (${fmtDate(de)}),
-       la répartition devient ${repS3}.</p>
-
-       <p>Au final, la part facturable au <b>père</b> est de <b>${totP} kWh</b> 
-       (= ${q1} + ${p1} + ${p2}).</p>`
+       <p>Sur cette période, <b>AP1 le ${fmtDate(da1)}</b> (index ${A1}) fait entrer le fils : la production est ventilée ${repS2} jusqu’à <b>AP2 le ${fmtDate(da2)}</b> (index ${A2}). Puis, d’AP2 à l’anniversaire (${fmtDate(de)}), la répartition devient ${repS3}.</p>
+       <p>La part facturable au <b>père</b> s’établit à <b>${totP} kWh</b> (= ${q1} + ${p1} + ${p2}).</p>`
     );
   } else if (ds && da1 && da2 && de && !validOrder){
-    L.push(`<p class="ko">⚠ Ordre incohérent : fin N-1 ≤ AP1 ≤ AP2 ≤ anniversaire et index croissants requis.</p>`);
+    L.push(`<p class="muted">⚠ Ordre chronologique : <b>N-1 ≤ AP1 ≤ AP2 ≤ Anniversaire</b> et index croissants.</p>`);
   }
 
-  // Manques
   if (!ready){
     const miss=[];
     if(!FS||!FE) miss.push("période");
-    if(!ds||!Number.isFinite(S)) miss.push("index fin N-1");
+    if(!ds||!Number.isFinite(S)) miss.push("index N-1");
     if(!da1||!Number.isFinite(A1)) miss.push("index AP1");
     if(!da2||!Number.isFinite(A2)) miss.push("index AP2");
     if(!de||!Number.isFinite(E)) miss.push("index anniversaire");
-    if(!(k1>=0&&k1<=1)) miss.push("coef père AP1→AP2");
-    if(!coefsOK2) miss.push("coefs père/fils/petit-fils après AP2 (somme 1)");
+    if(!(k1>=0&&k1<=1)) miss.push("part du père entre AP1 et AP2");
+    if(!coefsOK2) miss.push("parts père/fils/petit-fils après AP2 (somme 1)");
     if(miss.length) L.push(`<p class="muted">À compléter : ${miss.join(" • ")}.</p>`);
   }
 
   chrono2.innerHTML=L.join("");
 }
 
-/* Histogramme empilé par segment */
 function drawStackedPF2(host, data){
   host.innerHTML="";
   const svgNS="http://www.w3.org/2000/svg";
@@ -516,7 +503,7 @@ function compute2(){
   if(ready){
     q1=A1-S; q2=A2-A1; q3=E-A2;
     p1=Math.round(q2*k1); c1=q2-p1;
-    p2=Math.round(q3*k2p); c2=Math.round(q3*k2f); g2=q3-p2-c2; // écart d’arrondi
+    p2=Math.round(q3*k2p); c2=Math.round(q3*k2f); g2=q3-p2-c2;
     totP=q1+p1+p2;
 
     okSeg2 = (p1 + c1 === q2);
@@ -541,9 +528,9 @@ function compute2(){
   if (ready){
     let line = [
       `BAP : AP1 au ${fmtDate(da1)} (index ${A1}) puis AP2 au ${fmtDate(da2)} (index ${A2})`,
-      `; avant AP1 : ${A1} − ${S} = ${q1}`,
-      `; entre AP1 et AP2 : ${A2} − ${A1} = ${q2} × ${pctText(k1)} % = ${p1}`,
-      `; après AP2 : ${E} − ${A2} = ${q3} × ${pctText(k2p)} % = ${p2}`,
+      `; avant AP1 : ${A1} - ${S} = ${q1}`,
+      `; entre AP1 et AP2 : ${A2} - ${A1} = ${q2} × ${pctText(k1)} % = ${p1}`,
+      `; après AP2 : ${E} - ${A2} = ${q3} × ${pctText(k2p)} % = ${p2}`,
       `⇒ quantité attendue (père) = ${q1} + ${p1} + ${p2}`
     ].join(" ");
     const pStr=(price2.value||"").trim(), pNum=asNum(pStr);
@@ -596,10 +583,8 @@ window.addEventListener('DOMContentLoaded', ()=>{
     dAP21.value="2024-04-01";    iAP21.value="6200";
     dAP22.value="2024-09-15";    iAP22.value="9100";
     dEnd2.value="2024-12-31";    iEnd2.value="11200";
-    coef21_pere.value="0.70";    // S2 : 70% père
-    coef22_pere.value="0.60";    // S3 : 60/25/15
-    coef22_fils.value="0.25";
-    coef22_petit.value="0.15";
+    coef21_pere.value="0.70";
+    coef22_pere.value="0.60"; coef22_fils.value="0.25"; coef22_petit.value="0.15";
     price2.value="0.10";
     compute2();
   });
@@ -613,7 +598,7 @@ window.addEventListener('DOMContentLoaded', ()=>{
 
   document.getElementById('copy2').addEventListener('click', ()=>{ bap2.select(); document.execCommand('copy'); });
 
-  /* Démarrage : précharge l’exemple PF1 pour montrer le flux */
+  /* Démarrage : on charge l’exemple 1 AP pour montrer le flux */
   document.getElementById('exA1').click();
 });
 </script>
