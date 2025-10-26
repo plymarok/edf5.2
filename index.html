@@ -1,3 +1,260 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Calcul normé — AP Père & Fils / Père, Fils & Petit-fils</title>
+<meta name="color-scheme" content="light dark" />
+<style>
+  :root{
+    --bg:#f7f7fb; --panel:#fff; --text:#16161b; --muted:#6b7280;
+    --accent:#4f46e5; --accent-weak:#eef2ff;
+    --border:#e7e7ef; --shadow:0 10px 26px rgba(16,24,40,.06);
+  }
+  html[data-theme="dark"]{
+    --bg:#0f1115; --panel:#161a22; --text:#e9e9f2; --muted:#9aa0aa;
+    --accent:#8b93ff; --accent-weak:#1e2330; --border:#262b36; --shadow:0 12px 28px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+  .topbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:14px 18px;background:var(--panel);border-bottom:1px solid var(--border);box-shadow:var(--shadow)}
+  .topbar h1{font-size:18px;margin:0}
+  .btn{border-radius:10px;border:1px solid var(--border);background:var(--panel);color:var(--text);padding:10px 14px;cursor:pointer}
+  .btn.primary{background:var(--accent);color:#fff;border-color:transparent}
+  .btn.ghost{background:transparent}
+
+  /* Onglets */
+  .tabs{display:flex;gap:8px;margin:16px auto;max-width:1100px;padding:0 18px}
+  .tab{padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:var(--panel);cursor:pointer}
+  .tab.active{background:var(--accent);color:#fff;border-color:transparent}
+
+  /* Contenu */
+  .container{max-width:1100px;margin:0 auto 24px;padding:0 18px;display:grid;gap:18px}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px 16px 20px;box-shadow:var(--shadow)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+  .row{display:grid;grid-template-columns:230px 1fr;gap:10px;align-items:center;margin:8px 0}
+  .help{grid-column:2/3;font-size:12px;color:var(--muted);margin-top:-6px;margin-bottom:6px}
+  .control{background:transparent;border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);width:100%}
+  .control:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-weak)}
+  textarea{width:100%;min-height:120px;resize:vertical;border-radius:10px;border:1px solid var(--border);padding:10px}
+  svg.timeline{width:100%;height:210px}
+  .muted{color:var(--muted)} .mono{font-variant-numeric:tabular-nums}
+  .chroniqueLive{min-height:260px;border:1px solid var(--border);border-radius:12px;padding:14px;background:var(--panel)}
+  .chroniqueLive h4{margin:6px 0 8px} .chroniqueLive p{margin:6px 0}
+  .chip{display:inline-block;background:var(--accent-weak);padding:2px 8px;border-radius:999px}
+
+  /* Panneaux d’onglet */
+  .tab-panel{display:none}
+  .tab-panel.active{display:grid}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <h1>Calcul normé — Augmentations de puissance</h1>
+  <div class="actions">
+    <button id="theme" class="btn ghost">🌙/☀️</button>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-panel="pf1">Père & Fils (1 AP)</button>
+  <button class="tab" data-panel="pf2">Père, Fils & Petit-fils (2 AP)</button>
+</nav>
+
+<!-- ============== ONGLET 1 : PÈRE & FILS (1 AP) — TON MODÈLE INCHANGÉ ============== -->
+<main id="pf1" class="container tab-panel active">
+  <section class="panel">
+    <h3>1) Renseigne le cas — Père & Fils (1 AP)</h3>
+    <div class="grid">
+      <div>
+        <h4>Période de facturation</h4>
+        <div class="row"><label>Début</label><input id="fStart1" type="date" class="control"></div>
+        <div class="row"><label>Fin</label><input id="fEnd1" type="date" class="control"></div>
+
+        <h4 style="margin-top:12px">Jalons d’index</h4>
+        <div class="row"><label>Fin N-1</label><input id="dStart1" type="date" class="control"></div>
+        <div class="row"><label>Index fin N-1</label><input id="iStart1" type="number" step="1" class="control" placeholder="ex. 0"></div>
+        <div class="row"><label>Date d’AP</label><input id="dAP1" type="date" class="control"></div>
+        <div class="row"><label>Index AP</label><input id="iAP1" type="number" step="1" class="control" placeholder="ex. 1715"></div>
+        <div class="row"><label>Anniversaire</label><input id="dEnd1" type="date" class="control"></div>
+        <div class="row"><label>Index anniversaire</label><input id="iEnd1" type="number" step="1" class="control" placeholder="ex. 3112"></div>
+
+        <h4 style="margin-top:12px">Coefficients</h4>
+        <div class="row"><label>Coef père après AP</label><input id="coef1" type="number" step="0.01" min="0" max="1" class="control" placeholder="0.70 = 70 %"></div>
+
+        <div class="row"><label>Prix (€/kWh) <span class="muted">(optionnel)</span></label>
+          <input id="price1" type="text" class="control" placeholder="0.10">
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button id="exA1" class="btn">Exemple (70 %)</button>
+          <button id="exB1" class="btn">Exemple (80 %)</button>
+          <button id="clear1" class="btn">Vider</button>
+        </div>
+      </div>
+
+      <div>
+        <h4>Chronique (résumé en temps réel)</h4>
+        <div id="chroniqueLive1" class="chroniqueLive"></div>
+      </div>
+    </div>
+    <div id="timeline1" style="margin-top:14px"></div>
+  </section>
+
+  <section class="panel">
+    <h3>2) BAP — Commentaire normé</h3>
+    <textarea id="bap1" class="mono" readonly></textarea>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button id="copy1" class="btn primary">Copier le BAP</button>
+      <span class="muted">Tolérance ± 1 kWh • Arrondi part père</span>
+    </div>
+  </section>
+</main>
+
+<!-- ============== ONGLET 2 : PÈRE, FILS & PETIT-FILS (2 AP) — NOUVEAU ============== -->
+<main id="pf2" class="container tab-panel">
+  <section class="panel">
+    <h3>1) Renseigne le cas — Père, Fils & Petit-fils (2 AP)</h3>
+    <div class="grid">
+      <div>
+        <h4>Période de facturation</h4>
+        <div class="row"><label>Début</label><input id="fStart2" type="date" class="control"></div>
+        <div class="row"><label>Fin</label><input id="fEnd2" type="date" class="control"></div>
+
+        <h4 style="margin-top:12px">Jalons d’index</h4>
+        <div class="row"><label>Fin N-1</label><input id="dStart2" type="date" class="control"></div>
+        <div class="row"><label>Index fin N-1</label><input id="iStart2" type="number" step="1" class="control"></div>
+
+        <div class="row"><label>Date AP1</label><input id="dAP21" type="date" class="control"></div>
+        <div class="row"><label>Index AP1</label><input id="iAP21" type="number" step="1" class="control"></div>
+
+        <div class="row"><label>Date AP2</label><input id="dAP22" type="date" class="control"></div>
+        <div class="row"><label>Index AP2</label><input id="iAP22" type="number" step="1" class="control"></div>
+
+        <div class="row"><label>Anniversaire</label><input id="dEnd2" type="date" class="control"></div>
+        <div class="row"><label>Index anniversaire</label><input id="iEnd2" type="number" step="1" class="control"></div>
+
+        <h4 style="margin-top:12px">Coefficients</h4>
+        <div class="row"><label>AP1→AP2 : coef père</label><input id="coef21_pere" type="number" step="0.01" min="0" max="1" class="control" placeholder="0.70"></div>
+        <div class="row"><label>Après AP2 : père</label><input id="coef22_pere" type="number" step="0.01" min="0" max="1" class="control" placeholder="0.60"></div>
+        <div class="row"><label>Après AP2 : fils</label><input id="coef22_fils" type="number" step="0.01" min="0" max="1" class="control" placeholder="0.25"></div>
+        <div class="row"><label>Après AP2 : petit-fils</label><input id="coef22_petit" type="number" step="0.01" min="0" max="1" class="control" placeholder="0.15"></div>
+
+        <div class="row"><label>Prix (€/kWh) <span class="muted">(optionnel)</span></label><input id="price2" type="text" class="control" placeholder="0.10"></div>
+
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button id="ex2" class="btn">Exemple 2 AP</button>
+          <button id="clear2" class="btn">Vider</button>
+        </div>
+      </div>
+
+      <div>
+        <h4>Chronique (résumé en temps réel)</h4>
+        <div id="chroniqueLive2" class="chroniqueLive"></div>
+      </div>
+    </div>
+    <div id="timeline2" style="margin-top:14px"></div>
+  </section>
+
+  <section class="panel">
+    <h3>2) BAP — Commentaire normé</h3>
+    <textarea id="bap2" class="mono" readonly></textarea>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button id="copy2" class="btn primary">Copier le BAP</button>
+      <span class="muted">Après AP2, les 3 coefficients doivent sommer 1</span>
+    </div>
+  </section>
+</main>
+
+<script>
+/* =================== Thème =================== */
+(function(){
+  const root=document.documentElement, key="ap-theme";
+  const saved=localStorage.getItem(key); if(saved) root.setAttribute("data-theme", saved);
+  document.getElementById("theme").onclick=()=>{
+    const next=root.getAttribute("data-theme")==="dark"?"light":"dark";
+    root.setAttribute("data-theme", next); localStorage.setItem(key,next);
+  };
+})();
+
+/* =================== Onglets =================== */
+document.querySelectorAll('.tabs .tab').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tabs .tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+    document.getElementById(btn.dataset.panel).classList.add('active');
+  });
+});
+
+/* =================== Helpers communs =================== */
+const i18n = n => Number(n).toLocaleString("fr-FR");
+const raw  = n => String(n);
+const fmt  = s => s ? new Date(s+"T00:00:00").toLocaleDateString("fr-FR") : "";
+const asNum = v => (v===""||v==null)? NaN : Number(String(v).replace(",","."));
+const pctText = x => (x*100).toLocaleString("fr-FR",{maximumFractionDigits:2}).replace(/\u00a0/g," ");
+const diffDays=(a,b)=>Math.round((new Date(b)-new Date(a))/(1000*3600*24));
+function guessPeriodLabel(a,b){
+  if(!(a&&b)) return "";
+  const d=diffDays(a,b);
+  if(d>=330) return "période annuelle";
+  if(d>=170 && d<=200) return "période semestrielle";
+  return `période de ${d} jours`;
+}
+function drawTimeline(host, marks){
+  host.innerHTML="";
+  const svgNS="http://www.w3.org/2000/svg";
+  const svg=document.createElementNS(svgNS,"svg");
+  svg.setAttribute("class","timeline");
+  svg.setAttribute("viewBox","0 0 1100 210");
+  svg.setAttribute("preserveAspectRatio","xMidYMid meet");
+  host.appendChild(svg);
+
+  const valid=marks.filter(m=>m.d);
+  if(valid.length<2){
+    const p=document.createElement("div");
+    p.className="muted"; p.textContent="Renseigne la période et les jalons : la ligne de vie se dessine.";
+    host.appendChild(p); return;
+  }
+  valid.sort((a,b)=>a.d-b.d);
+  const min=valid[0].d, max=valid[valid.length-1].d;
+  const span=Math.max(1,(max-min));
+  const X=d=>40+((d-min)/span)*1020;
+
+  function N(tag,attrs){const n=document.createElementNS(svgNS,tag);for(const k in attrs)n.setAttribute(k,attrs[k]);svg.appendChild(n);return n;}
+  function vmark(x){N("line",{x1:x,y1:70,x2:x,y2:110,stroke:"currentColor","stroke-width":3});}
+  function text(t,x,y,anchor="start",size=14){const n=N("text",{x,y,"text-anchor":anchor,"font-size":size}); n.textContent=t;}
+  function line(x1,y1,x2,y2,w,col){N("line",{x1,y1,x2,y2,stroke:col||"currentColor","stroke-width":w,"stroke-linecap":"round"});}
+
+  // Période si fournie
+  const fstart=marks.find(m=>m.tag==="fstart"), fend=marks.find(m=>m.tag==="fend");
+  if(fstart && fend){
+    const x1=X(fstart.d), x2=X(fend.d);
+    N("rect",{x:Math.min(x1,x2),y:78,width:Math.abs(x2-x1),height:24,fill:"var(--accent-weak)",opacity:"0.6"});
+    text("Période de facturation",(x1+x2)/2,66,"middle",12);
+  }
+
+  line(X(min),90,X(max),90,6,"#2a63e7");
+  valid.forEach(m=>{
+    const x=X(m.d); vmark(x);
+    text(fmt(m.d.toISOString().slice(0,10)),x,36,"middle");
+    if(Number.isFinite(m.idx)) text(raw(m.idx),x,140,"middle");
+    if(m.lbl) text(m.lbl,x,168,"middle",12);
+  });
+}
+
+/* =================== ONGLET 1 : PÈRE & FILS =================== */
+// Sélecteurs
+const fStart1=document.getElementById('fStart1'), fEnd1=document.getElementById('fEnd1');
+const dStart1=document.getElementById('dStart1'), iStart1=document.getElementById('iStart1');
+const dAP1=document.getElementById('dAP1'), iAP1=document.getElementById('iAP1');
+const dEnd1=document.getElementById('dEnd1'), iEnd1=document.getElementById('iEnd1');
+const coef1=document.getElementById('coef1'), price1=document.getElementById('price1');
+const timeline1=document.getElementById('timeline1'), bap1=document.getElementById('bap1');
+let chroniqueLive = document.getElementById('chroniqueLive1'); // utilisé par ta fonction initiale
+
+// TA FONCTION INITIALE — INCHANGÉE
 function renderChroniqueLive(values){
   const {
     FS, FE, ds, S, da, A, de, E, k,
@@ -83,3 +340,230 @@ function renderChroniqueLive(values){
 
   chroniqueLive.innerHTML = L.join("");
 }
+
+// Calculs PF1
+function compute1(){
+  chroniqueLive = document.getElementById('chroniqueLive1'); // pointer sur la zone PF1
+  const FS=fStart1.value, FE=fEnd1.value;
+  const ds=dStart1.value, da=dAP1.value, de=dEnd1.value;
+  const S=asNum(iStart1.value), A=asNum(iAP1.value), E=asNum(iEnd1.value);
+  const k=asNum(coef1.value);
+
+  const validOrder = (ds && da && de)
+    ? (new Date(ds)<=new Date(da) && new Date(da)<=new Date(de) && S<=A && A<=E)
+    : false;
+
+  let q1=NaN,q2=NaN,fatherAfter=NaN,childAfter=NaN,fatherTotal=NaN, ok1=false, ok2=false;
+  const ready = ds && da && de && [S,A,E].every(Number.isFinite) && (k>=0 && k<=1) && validOrder;
+
+  if(ready){
+    q1=A-S; q2=E-A;
+    fatherAfter=Math.round(q2*k);
+    childAfter=q2-fatherAfter;
+    fatherTotal=q1+fatherAfter;
+    ok1=(fatherAfter+childAfter===q2);
+    ok2=((E-S)===(q1+q2));
+  }
+
+  // Timeline
+  drawTimeline(timeline1,[
+    {tag:"fstart",d:FS?new Date(FS):null},
+    {tag:"fend",d:FE?new Date(FE):null},
+    {d:ds?new Date(ds):null,idx:S},
+    {d:da?new Date(da):null,idx:A},
+    {d:de?new Date(de):null,idx:E},
+    {d:ds&&da?new Date((+new Date(ds)+new Date(da))/2):null,lbl:"100 % père"},
+    {d:da&&de?new Date((+new Date(da)+new Date(de))/2):null,lbl:(k>=0&&k<=1?`${pctText(k)} % père`:"")}
+  ]);
+
+  // BAP
+  const coefPct=pctText(k);
+  if(ready){
+    let line = `BAP : augmentation de puissance au ${fmt(da)} avec un index de ${raw(A)} ` +
+               `soit avant augmentation de puissance : ${raw(A)} - ${raw(S)} = ${raw(q1)} ` +
+               `+ après augmentation de puissance : ${raw(E)} - ${raw(A)} = ${raw(q2)} x ${coefPct} % = ${raw(fatherAfter)} ` +
+               `=> quantité attendue de la facture = ${raw(q1)} + ${raw(fatherAfter)}`;
+    const pStr=(price1.value||"").trim(), pNum=asNum(pStr);
+    if(pStr && Number.isFinite(pNum)){
+      const amount=(fatherTotal*pNum).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2});
+      line += ` soit ${raw(fatherTotal)} x ${pStr} = ${amount}€`;
+    }
+    bap1.value=line;
+  } else {
+    bap1.value="";
+  }
+
+  renderChroniqueLive({FS,FE,ds,S,da,A,de,E,k,q1,q2,fatherAfter,childAfter,fatherTotal,validOrder,ok1,ok2,ready});
+}
+
+// Listeners PF1
+[fStart1,fEnd1,dStart1,iStart1,dAP1,iAP1,dEnd1,iEnd1,coef1,price1].forEach(el=>el.addEventListener('input', compute1));
+document.getElementById('exA1').onclick=()=>{
+  fStart1.value="2024-03-05"; fEnd1.value="2025-03-05";
+  dStart1.value="2024-03-05"; iStart1.value="12000";
+  dAP1.value="2024-08-20";   iAP1.value="18450";
+  dEnd1.value="2025-03-05";  iEnd1.value="25380";
+  coef1.value="0.70";        price1.value="0.10"; compute1();
+};
+document.getElementById('exB1').onclick=()=>{
+  fStart1.value="2019-10-24"; fEnd1.value="2020-10-23";
+  dStart1.value="2019-10-24"; iStart1.value="0";
+  dAP1.value="2020-05-27";   iAP1.value="1715";
+  dEnd1.value="2020-10-23";  iEnd1.value="3112";
+  coef1.value="0.80";        price1.value=""; compute1();
+};
+document.getElementById('clear1').onclick=()=>{
+  [fStart1,fEnd1,dStart1,iStart1,dAP1,iAP1,dEnd1,iEnd1,coef1,price1].forEach(el=>el.value="");
+  document.getElementById('chroniqueLive1').innerHTML=""; timeline1.innerHTML=""; bap1.value="";
+};
+document.getElementById('copy1').onclick=()=>{ bap1.select(); document.execCommand('copy'); };
+
+/* =================== ONGLET 2 : PÈRE, FILS & PETIT-FILS (2 AP) =================== */
+const fStart2=document.getElementById('fStart2'), fEnd2=document.getElementById('fEnd2');
+const dStart2=document.getElementById('dStart2'), iStart2=document.getElementById('iStart2');
+const dAP21=document.getElementById('dAP21'), iAP21=document.getElementById('iAP21');
+const dAP22=document.getElementById('dAP22'), iAP22=document.getElementById('iAP22');
+const dEnd2=document.getElementById('dEnd2'), iEnd2=document.getElementById('iEnd2');
+const coef21_pere=document.getElementById('coef21_pere');
+const coef22_pere=document.getElementById('coef22_pere');
+const coef22_fils=document.getElementById('coef22_fils');
+const coef22_petit=document.getElementById('coef22_petit');
+const price2=document.getElementById('price2');
+const timeline2=document.getElementById('timeline2'), bap2=document.getElementById('bap2');
+const chroniqueLive2=document.getElementById('chroniqueLive2');
+
+function renderChroniqueLive2(v){
+  const {FS,FE,ds,S,da1,A1,da2,A2,de,E,k1,k2p,k2f,k2c,
+         q1,q2,q3,p1,c1,p2,c2,g2,totP,
+         validOrder, coefsOK2, okSeg2, okSeg3, okDelta, ready} = v;
+
+  const L=[];
+  if (FS && FE){
+    L.push(`<h4>Le cadre</h4>
+      <p>La scène s’étire du <b>${fmt(FS)}</b> au <b>${fmt(FE)}</b> :
+      une <span class="chip">${guessPeriodLabel(FS,FE)}</span> ponctuée de deux augmentations.</p>`);
+  } else {
+    L.push(`<h4>Le cadre</h4><p class="muted">Saisis début et fin de période.</p>`);
+  }
+
+  const jal=[];
+  if (ds)  jal.push(`fin N-1 ${fmt(ds)} — ${Number.isFinite(S)?S:"?"}`);
+  if (da1) jal.push(`AP1 ${fmt(da1)} — ${Number.isFinite(A1)?A1:"?"}`);
+  if (da2) jal.push(`AP2 ${fmt(da2)} — ${Number.isFinite(A2)?A2:"?"}`);
+  if (de)  jal.push(`anniv. ${fmt(de)} — ${Number.isFinite(E)?E:"?"}`);
+  L.push(jal.length?`<p>Repères : ${jal.join(" ; ")}.</p>`:`<p class="muted">Repères : fin N-1 → AP1 → AP2 → anniversaire.</p>`);
+
+  if (da1 && da2){
+    L.push(`<p>Entre AP1 et AP2 : <b>${pctText(k1)} %</b> père • <b>${pctText(1-k1)} %</b> fils.</p>`);
+  }
+  if (de){
+    if (coefsOK2){
+      L.push(`<p>Après AP2 : <b>${pctText(k2p)} %</b> père • <b>${pctText(k2f)} %</b> fils • <b>${pctText(k2c)} %</b> petit-fils (somme 100 %).</p>`);
+    } else {
+      L.push(`<p class="muted">Après AP2, les trois coefficients doivent être dans [0,1] et sommer 1.</p>`);
+    }
+  }
+
+  if (ready){
+    L.push(`<h4>Ce que disent les compteurs</h4>
+      <p>Avant AP1 : <b>${q1}</b> kWh au père.</p>
+      <p>AP1 → AP2 : <b>${q2}</b> kWh → père <b>${p1}</b> • fils <b>${c1}</b>.</p>
+      <p>Après AP2 : <b>${q3}</b> kWh → père <b>${p2}</b> • fils <b>${c2}</b> • petit-fils <b>${g2}</b>.</p>
+      <p><b>Total père :</b> <b>${totP}</b> kWh.</p>
+      <p>${okSeg2?"✅":"❌"} parts(AP1→AP2)=Q₂ • ${okSeg3?"✅":"❌"} parts(après AP2)=Q₃ • ${okDelta?"✅":"❌"} Q₁+Q₂+Q₃=Δindex.</p>`);
+  } else if (ds && da1 && da2 && de && !validOrder){
+    L.push(`<p class="ko">⚠ Ordre : fin N-1 ≤ AP1 ≤ AP2 ≤ anniversaire et index croissants.</p>`);
+  }
+
+  chroniqueLive2.innerHTML=L.join("");
+}
+
+function compute2(){
+  const FS=fStart2.value, FE=fEnd2.value;
+  const ds=dStart2.value, da1=dAP21.value, da2=dAP22.value, de=dEnd2.value;
+  const S=asNum(iStart2.value), A1=asNum(iAP21.value), A2=asNum(iAP22.value), E=asNum(iEnd2.value);
+  const k1=asNum(coef21_pere.value), k2p=asNum(coef22_pere.value), k2f=asNum(coef22_fils.value), k2c=asNum(coef22_petit.value);
+
+  const validOrder=(ds&&da1&&da2&&de)
+    ? (new Date(ds)<=new Date(da1) && new Date(da1)<=new Date(da2) && new Date(da2)<=new Date(de) && S<=A1 && A1<=A2 && A2<=E)
+    : false;
+
+  const coefsOK2 = [k2p,k2f,k2c].every(x=>x>=0 && x<=1) && Math.abs((k2p+k2f+k2c)-1)<1e-6;
+
+  let q1=NaN,q2=NaN,q3=NaN,p1=NaN,c1=NaN,p2=NaN,c2=NaN,g2=NaN,totP=NaN;
+  let okSeg2=false, okSeg3=false, okDelta=false;
+  const ready = ds&&da1&&da2&&de && [S,A1,A2,E].every(Number.isFinite) && Number.isFinite(k1) && coefsOK2 && validOrder;
+
+  if (ready){
+    q1=A1-S; q2=A2-A1; q3=E-A2;
+    p1=Math.round(q2*k1); c1=q2-p1;
+    p2=Math.round(q3*k2p); c2=Math.round(q3*k2f); g2=q3-p2-c2;
+    totP=q1+p1+p2;
+
+    okSeg2 = (p1 + c1 === q2);
+    okSeg3 = (p2 + c2 + g2 === q3);
+    okDelta = ((E - S) === (q1 + q2 + q3));
+  }
+
+  drawTimeline(timeline2,[
+    {tag:"fstart", d:FS?new Date(FS):null},
+    {tag:"fend",   d:FE?new Date(FE):null},
+    {d:ds?new Date(ds):null,  idx:S},
+    {d:da1?new Date(da1):null,idx:A1},
+    {d:da2?new Date(da2):null,idx:A2},
+    {d:de?new Date(de):null,  idx:E},
+  ]);
+
+  if (ready){
+    let line = [
+      `BAP : AP1 au ${fmt(da1)} (index ${A1}) puis AP2 au ${fmt(da2)} (index ${A2})`,
+      `; avant AP1 : ${A1} - ${S} = ${q1}`,
+      `; entre AP1 et AP2 : ${A2} - ${A1} = ${q2} x ${pctText(k1)} % = ${p1}`,
+      `; après AP2 : ${E} - ${A2} = ${q3} x ${pctText(k2p)} % = ${p2}`,
+      `=> quantité attendue de la facture = ${q1} + ${p1} + ${p2}`
+    ].join(" ");
+
+    const pStr=(price2.value||"").trim(), pNum=asNum(pStr);
+    bap2.value = (pStr && Number.isFinite(pNum))
+      ? `${line} soit ${totP} x ${pStr} = ${(totP*pNum).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})}€`
+      : line;
+  } else {
+    bap2.value = "";
+  }
+
+  renderChroniqueLive2({FS,FE,ds,S,da1,A1,da2,A2,de,E,k1,k2p,k2f,k2c,
+                        q1,q2,q3,p1,c1,p2,c2,g2,totP,
+                        validOrder, coefsOK2, okSeg2, okSeg3, okDelta, ready});
+}
+
+// Listeners PF2 + boutons
+[fStart2,fEnd2,dStart2,iStart2,dAP21,iAP21,dAP22,iAP22,dEnd2,iEnd2,
+ coef21_pere,coef22_pere,coef22_fils,coef22_petit,price2
+].forEach(el=>el.addEventListener('input', compute2));
+
+document.getElementById('ex2').onclick=()=>{
+  fStart2.value="2024-01-01";  fEnd2.value="2024-12-31";
+  dStart2.value="2024-01-01";  iStart2.value="5000";
+  dAP21.value="2024-04-01";    iAP21.value="6200";
+  dAP22.value="2024-09-15";    iAP22.value="9100";
+  dEnd2.value="2024-12-31";    iEnd2.value="11200";
+  coef21_pere.value="0.70";    // AP1→AP2 : 70% père
+  coef22_pere.value="0.60";    // Après AP2 : 60/25/15
+  coef22_fils.value="0.25";
+  coef22_petit.value="0.15";
+  price2.value="0.10";
+  compute2();
+};
+document.getElementById('clear2').onclick=()=>{
+  [fStart2,fEnd2,dStart2,iStart2,dAP21,iAP21,dAP22,iAP22,dEnd2,iEnd2,
+   coef21_pere,coef22_pere,coef22_fils,coef22_petit,price2
+  ].forEach(el=>el.value="");
+  chroniqueLive2.innerHTML=""; timeline2.innerHTML=""; bap2.value="";
+};
+document.getElementById('copy2').onclick=()=>{ bap2.select(); document.execCommand('copy'); };
+
+/* ============== Init : on charge un exemple dans l’onglet 1 ============== */
+document.getElementById('exA1').click();
+</script>
+</body>
+</html>
