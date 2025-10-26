@@ -10,10 +10,13 @@
     --bg:#f7f7fb; --panel:#fff; --text:#16161b; --muted:#6b7280;
     --accent:#4f46e5; --accent-weak:#eef2ff;
     --border:#e7e7ef; --shadow:0 10px 26px rgba(16,24,40,.06);
+    /* Couleurs entités (PF2) */
+    --col-pere:#4f46e5; --col-fils:#10b981; --col-petit:#a855f7;
   }
   html[data-theme="dark"]{
     --bg:#0f1115; --panel:#161a22; --text:#e9e9f2; --muted:#9aa0aa;
     --accent:#8b93ff; --accent-weak:#1e2330; --border:#262b36; --shadow:0 12px 28px rgba(0,0,0,.45);
+    --col-pere:#8b93ff; --col-fils:#34d399; --col-petit:#c084fc;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
@@ -24,7 +27,7 @@
   .btn.primary{background:var(--accent);color:#fff;border-color:transparent}
   .btn.ghost{background:transparent}
 
-  /* Onglets */
+  /* Onglets (haut) */
   .tabs{display:flex;gap:8px;margin:16px auto;max-width:1100px;padding:0 18px}
   .tab{padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:var(--panel);cursor:pointer}
   .tab.active{background:var(--accent);color:#fff;border-color:transparent}
@@ -47,6 +50,18 @@
   /* Panneaux d’onglet */
   .tab-panel{display:none}
   .tab-panel.active{display:grid}
+
+  /* Mini-tabs PF2 (viz) */
+  .mini-tabs{display:flex;gap:8px;margin:10px 0}
+  .mini-tab{padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--panel);cursor:pointer;font-size:14px}
+  .mini-tab.active{background:var(--accent);color:#fff;border-color:transparent}
+  .viz-pane{display:none}
+  .viz-pane.active{display:block}
+
+  /* Légende PF2 */
+  .legend{display:flex;gap:14px;align-items:center;font-size:13px;color:var(--muted);margin-top:8px}
+  .swatch{width:12px;height:12px;border-radius:3px;display:inline-block}
+  .sw-pere{background:var(--col-pere)} .sw-fils{background:var(--col-fils)} .sw-petit{background:var(--col-petit)}
 </style>
 </head>
 <body>
@@ -62,7 +77,7 @@
   <button class="tab" data-panel="pf2" type="button">Père, Fils & Petit-fils (2 AP)</button>
 </nav>
 
-<!-- ============== ONGLET 1 : PÈRE & FILS (1 AP) — MODELE INCHANGÉ ============== -->
+<!-- =================== ONGLET 1 : PÈRE & FILS (1 AP) — VERROUILLÉ =================== -->
 <main id="pf1" class="container tab-panel active">
   <section class="panel">
     <h3>1) Renseigne le cas — Père & Fils (1 AP)</h3>
@@ -112,7 +127,7 @@
   </section>
 </main>
 
-<!-- ============== ONGLET 2 : PÈRE, FILS & PETIT-FILS (2 AP) — NOUVEAU ============== -->
+<!-- =================== ONGLET 2 : PÈRE, FILS & PETIT-FILS (2 AP) — AMÉLIORÉ =================== -->
 <main id="pf2" class="container tab-panel">
   <section class="panel">
     <h3>1) Renseigne le cas — Père, Fils & Petit-fils (2 AP)</h3>
@@ -154,7 +169,20 @@
         <div id="chroniqueLive2" class="chroniqueLive"></div>
       </div>
     </div>
-    <div id="timeline2" style="margin-top:14px"></div>
+
+    <!-- Mini onglets de visualisation -->
+    <div class="mini-tabs">
+      <button class="mini-tab active" data-viz="time2" type="button">Ligne de vie</button>
+      <button class="mini-tab" data-viz="stack2" type="button">Histogramme par segment</button>
+    </div>
+    <div id="viz-time2" class="viz-pane active"><div id="timeline2"></div></div>
+    <div id="viz-stack2" class="viz-pane"><div id="timeline2bars"></div>
+      <div class="legend">
+        <span class="swatch sw-pere"></span> père
+        <span class="swatch sw-fils"></span> fils
+        <span class="swatch sw-petit"></span> petit-fils
+      </div>
+    </div>
   </section>
 
   <section class="panel">
@@ -225,7 +253,6 @@ function drawTimeline(host, marks){
   function N(tag,attrs){const n=document.createElementNS(svgNS,tag);for(const k in attrs)n.setAttribute(k,attrs[k]);svg.appendChild(n);return n;}
   function vmark(x){N("line",{x1:x,y1:70,x2:x,y2:110,stroke:"currentColor","stroke-width":3});}
   function text(t,x,y,anchor="start",size=14){const n=N("text",{x,y,"text-anchor":anchor,"font-size":size}); n.textContent=t;}
-  function line(x1,y1,x2,y2,w,col){N("line",{x1,y1,x2,y2,stroke:col||"currentColor","stroke-width":w,"stroke-linecap":"round"});}
 
   const fstart=marks.find(m=>m.tag==="fstart"), fend=marks.find(m=>m.tag==="fend");
   if(fstart && fend){
@@ -234,7 +261,9 @@ function drawTimeline(host, marks){
     text("Période de facturation",(x1+x2)/2,66,"middle",12);
   }
 
-  line(X(min),90,X(max),90,6,"#2a63e7");
+  // Axe
+  N("line",{x1:X(valid[0].d),y1:90,x2:X(valid[valid.length-1].d),y2:90,stroke:"#2a63e7","stroke-width":6,"stroke-linecap":"round"});
+
   valid.forEach(m=>{
     const x=X(m.d); vmark(x);
     text(fmt(m.d.toISOString().slice(0,10)),x,36,"middle");
@@ -243,83 +272,53 @@ function drawTimeline(host, marks){
   });
 }
 
-/* =================== ONGLET 1 : PÈRE & FILS =================== */
-// Sélecteurs
+/* =================== ONGLET 1 : PÈRE & FILS — INCHANGÉ =================== */
 const fStart1=document.getElementById('fStart1'), fEnd1=document.getElementById('fEnd1');
 const dStart1=document.getElementById('dStart1'), iStart1=document.getElementById('iStart1');
 const dAP1=document.getElementById('dAP1'), iAP1=document.getElementById('iAP1');
 const dEnd1=document.getElementById('dEnd1'), iEnd1=document.getElementById('iEnd1');
 const coef1=document.getElementById('coef1'), price1=document.getElementById('price1');
 const timeline1=document.getElementById('timeline1'), bap1=document.getElementById('bap1');
-let chroniqueLive = document.getElementById('chroniqueLive1'); // PF1
+let chroniqueLive = document.getElementById('chroniqueLive1');
 
-// Fonction récit (ta version inchangée)
 function renderChroniqueLive(values){
-  const {
-    FS, FE, ds, S, da, A, de, E, k,
-    q1, q2, fatherAfter, childAfter, fatherTotal,
-    validOrder, ok1, ok2, ready
-  } = values;
-
+  const { FS, FE, ds, S, da, A, de, E, k, q1, q2, fatherAfter, childAfter, fatherTotal, validOrder, ok1, ok2, ready } = values;
   const L = [];
-
   if (FS && FE) {
-    L.push(
-      `<h4>Le cadre</h4>
+    L.push(`<h4>Le cadre</h4>
        <p>Rideau levé sur la <span class="chip">${guessPeriodLabel(FS,FE)}</span> :
        du <b>${fmt(FS)}</b> au <b>${fmt(FE)}</b>, c’est dans cet intervalle que se joue la répartition
-       entre <i>père</i> et <i>fils</i>.</p>`
-    );
+       entre <i>père</i> et <i>fils</i>.</p>`);
   } else {
-    L.push(
-      `<h4>Le cadre</h4>
-       <p class="muted">Indique le début et la fin de la facture : je poserai ensuite les jalons et déroulerai le calcul.</p>`
-    );
+    L.push(`<h4>Le cadre</h4><p class="muted">Indique le début et la fin de la facture : je poserai ensuite les jalons et déroulerai le calcul.</p>`);
   }
-
   const jalons = [];
   if (ds) jalons.push(`à la <b>clôture précédente</b> (${fmt(ds)}), l’index du père est <b>${Number.isFinite(S)?String(S):"?"}</b> kWh`);
   if (da) jalons.push(`le <b>jour de l’AP</b> (${fmt(da)}), on relève <b>${Number.isFinite(A)?String(A):"?"}</b> kWh`);
   if (de) jalons.push(`à la <b>date anniversaire</b> (${fmt(de)}), l’index affiche <b>${Number.isFinite(E)?String(E):"?"}</b> kWh`);
-  L.push(
-    jalons.length
-      ? `<p>Trois repères structurent l’histoire : ${jalons.join(" ; ")}.</p>`
-      : `<p class="muted">J’attends les trois repères : fin N-1 → AP → anniversaire.</p>`
-  );
-
+  L.push(jalons.length ? `<p>Trois repères structurent l’histoire : ${jalons.join(" ; ")}.</p>` : `<p class="muted">J’attends les trois repères : fin N-1 → AP → anniversaire.</p>`);
   if (da && de) {
     if (k >= 0 && k <= 1) {
-      L.push(
-        `<p>À compter de l’AP, la production se partage avec constance :
+      L.push(`<p>À compter de l’AP, la production se partage avec constance :
          <b>${pctText(k)} %</b> au père et <b>${pctText(1-k)} %</b> au fils.
-         Avant cette date, le père est seul à bord.</p>`
-      );
+         Avant cette date, le père est seul à bord.</p>`);
     } else {
       L.push(`<p class="muted">Renseigne le <b>coefficient du père</b> après AP (entre 0 et 1) pour ventiler correctement.</p>`);
     }
   }
-
   if (ready) {
-    L.push(
-      `<h4>Ce que disent les compteurs</h4>
+    L.push(`<h4>Ce que disent les compteurs</h4>
        <p>De la fin N-1 à l’AP : <b>${A} − ${S} = ${q1} kWh</b> intégralement au père.</p>
        <p>De l’AP à l’anniversaire : <b>${E} − ${A} = ${q2} kWh</b>, ventilés en
        <b>${fatherAfter} kWh</b> (père) et <b>${childAfter} kWh</b> (fils).</p>
-       <p><b>Verdict pour le père :</b> <b>${fatherTotal} kWh</b> attendus sur la facture.</p>`
-    );
-
-    L.push(
-      `<p>${ok1 ? "✅" : "❌"} Les parts <i>père</i> et <i>fils</i> recomposent bien <i>Q_après</i> ;
+       <p><b>Verdict pour le père :</b> <b>${fatherTotal} kWh</b> attendus sur la facture.</p>`);
+    L.push(`<p>${ok1 ? "✅" : "❌"} Les parts <i>père</i> et <i>fils</i> recomposent bien <i>Q_après</i> ;
        ${ok2 ? "✅" : "❌"} <i>Q_avant + Q_après</i> recolle exactement à <i>Δindex</i>.
-       Autrement dit, les chiffres s’accordent avec le récit.</p>`
-    );
+       Autrement dit, les chiffres s’accordent avec le récit.</p>`);
   } else if (ds && da && de && !validOrder) {
-    L.push(
-      `<p class="ko">⚠ L’intrigue se brouille : l’ordre chronologique doit rester limpide
-       (<b>fin N-1 ≤ AP ≤ anniversaire</b>) et les index doivent être croissants.</p>`
-    );
+    L.push(`<p class="ko">⚠ L’intrigue se brouille : l’ordre chronologique doit rester limpide
+       (<b>fin N-1 ≤ AP ≤ anniversaire</b>) et les index doivent être croissants.</p>`);
   }
-
   if (!ready) {
     const manques = [];
     if (!FS || !FE) manques.push("période de facturation");
@@ -327,68 +326,50 @@ function renderChroniqueLive(values){
     if (!da || !Number.isFinite(A)) manques.push("index le jour d’AP");
     if (!de || !Number.isFinite(E)) manques.push("index à l’anniversaire");
     if (!(k>=0 && k<=1)) manques.push("coefficient du père après AP");
-    if (manques.length){
-      L.push(`<p class="muted">Pour achever le tableau : ${manques.join(" • ")}.</p>`);
-    }
+    if (manques.length){ L.push(`<p class="muted">Pour achever le tableau : ${manques.join(" • ")}.</p>`); }
   }
-
   chroniqueLive.innerHTML = L.join("");
 }
-
-// Calculs PF1
 function compute1(){
-  chroniqueLive = document.getElementById('chroniqueLive1'); // s'assure de viser l'onglet 1
+  chroniqueLive = document.getElementById('chroniqueLive1');
   const FS=fStart1.value, FE=fEnd1.value;
   const ds=dStart1.value, da=dAP1.value, de=dEnd1.value;
   const S=asNum(iStart1.value), A=asNum(iAP1.value), E=asNum(iEnd1.value);
   const k=asNum(coef1.value);
-
-  const validOrder = (ds && da && de)
-    ? (new Date(ds)<=new Date(da) && new Date(da)<=new Date(de) && S<=A && A<=E)
-    : false;
-
+  const validOrder = (ds && da && de) ? (new Date(ds)<=new Date(da) && new Date(da)<=new Date(de) && S<=A && A<=E) : false;
   let q1=NaN,q2=NaN,fatherAfter=NaN,childAfter=NaN,fatherTotal=NaN, ok1=false, ok2=false;
   const ready = ds && da && de && [S,A,E].every(Number.isFinite) && (k>=0 && k<=1) && validOrder;
-
   if(ready){
     q1=A-S; q2=E-A;
-    fatherAfter=Math.round(q2*k);
-    childAfter=q2-fatherAfter;
-    fatherTotal=q1+fatherAfter;
-    ok1=(fatherAfter+childAfter===q2);
-    ok2=((E-S)===(q1+q2));
+    fatherAfter=Math.round(q2*k); childAfter=q2-fatherAfter; fatherTotal=q1+fatherAfter;
+    ok1=(fatherAfter+childAfter===q2); ok2=((E-S)===(q1+q2));
   }
-
   drawTimeline(timeline1,[
     {tag:"fstart",d:FS?new Date(FS):null},
     {tag:"fend",d:FE?new Date(FE):null},
     {d:ds?new Date(ds):null,idx:S},
     {d:da?new Date(da):null,idx:A},
     {d:de?new Date(de):null,idx:E},
-    {d:(ds&&da)?new Date((+new Date(ds)+(+new Date(da)))/2):null,lbl:"100 % père"},
-    {d:(da&&de)?new Date((+new Date(da)+(+new Date(de)))/2):null,lbl:(k>=0&&k<=1?`${pctText(k)} % père`:"")}
+    {d:ds&&da?new Date((+new Date(ds)+new Date(da))/2):null,lbl:"100 % père"},
+    {d:da&&de?new Date((+new Date(da)+new Date(de))/2):null,lbl:(k>=0&&k<=1?`${pctText(k)} % père`:"")}
   ]);
-
   const coefPct=pctText(k);
   if(ready){
-    let line = `BAP : augmentation de puissance au ${fmt(da)} avec un index de ${raw(A)} ` +
-               `soit avant augmentation de puissance : ${raw(A)} - ${raw(S)} = ${raw(q1)} ` +
-               `+ après augmentation de puissance : ${raw(E)} - ${raw(A)} = ${raw(q2)} x ${coefPct} % = ${raw(fatherAfter)} ` +
+    let line = `BAP : augmentation de puissance au ${fmt(da)} (index ${raw(A)}) ` +
+               `; avant AP : ${raw(A)} - ${raw(S)} = ${raw(q1)} ` +
+               `; après AP : ${raw(E)} - ${raw(A)} = ${raw(q2)} × ${coefPct} % = ${raw(fatherAfter)} ` +
                `=> quantité attendue de la facture = ${raw(q1)} + ${raw(fatherAfter)}`;
     const pStr=(price1.value||"").trim(), pNum=asNum(pStr);
     if(pStr && Number.isFinite(pNum)){
       const amount=(fatherTotal*pNum).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2});
-      line += ` soit ${raw(fatherTotal)} x ${pStr} = ${amount}€`;
+      line += ` soit ${raw(fatherTotal)} × ${pStr} = ${amount}€`;
     }
     bap1.value=line;
-  } else {
-    bap1.value="";
-  }
-
+  } else { bap1.value=""; }
   renderChroniqueLive({FS,FE,ds,S,da,A,de,E,k,q1,q2,fatherAfter,childAfter,fatherTotal,validOrder,ok1,ok2,ready});
 }
 
-/* =================== ONGLET 2 : PÈRE, FILS & PETIT-FILS (2 AP) =================== */
+/* =================== ONGLET 2 : PÈRE, FILS & PETIT-FILS — AMÉLIORÉ =================== */
 const fStart2=document.getElementById('fStart2'), fEnd2=document.getElementById('fEnd2');
 const dStart2=document.getElementById('dStart2'), iStart2=document.getElementById('iStart2');
 const dAP21=document.getElementById('dAP21'), iAP21=document.getElementById('iAP21');
@@ -400,7 +381,18 @@ const coef22_fils=document.getElementById('coef22_fils');
 const coef22_petit=document.getElementById('coef22_petit');
 const price2=document.getElementById('price2');
 const timeline2=document.getElementById('timeline2'), bap2=document.getElementById('bap2');
-const chroniqueLive2=document.getElementById('chroniqueLive2');
+const chrono2=document.getElementById('chroniqueLive2');
+const bars2=document.getElementById('timeline2bars');
+
+/* Mini-tabs de visualisation PF2 */
+document.querySelectorAll('.mini-tab').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.mini-tab').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.viz-pane').forEach(p=>p.classList.remove('active'));
+    document.getElementById('viz-'+btn.dataset.viz).classList.add('active');
+  });
+});
 
 function renderChroniqueLive2(v){
   const {FS,FE,ds,S,da1,A1,da2,A2,de,E,k1,k2p,k2f,k2c,
@@ -408,44 +400,116 @@ function renderChroniqueLive2(v){
          validOrder, coefsOK2, okSeg2, okSeg3, okDelta, ready} = v;
 
   const L=[];
+  // Cadre
   if (FS && FE){
     L.push(`<h4>Le cadre</h4>
-      <p>La scène s’étire du <b>${fmt(FS)}</b> au <b>${fmt(FE)}</b> :
-      une <span class="chip">${guessPeriodLabel(FS,FE)}</span> ponctuée de deux augmentations.</p>`);
+      <p>Du <b>${fmt(FS)}</b> au <b>${fmt(FE)}</b> — une <span class="chip">${guessPeriodLabel(FS,FE)}</span> scandée par deux augmentations (AP1, AP2).</p>`);
   } else {
-    L.push(`<h4>Le cadre</h4><p class="muted">Saisis début et fin de période.</p>`);
+    L.push(`<h4>Le cadre</h4><p class="muted">Renseigne le début et la fin de période.</p>`);
   }
 
-  const jal=[];
-  if (ds)  jal.push(`fin N-1 ${fmt(ds)} — ${Number.isFinite(S)?S:"?"}`);
-  if (da1) jal.push(`AP1 ${fmt(da1)} — ${Number.isFinite(A1)?A1:"?"}`);
-  if (da2) jal.push(`AP2 ${fmt(da2)} — ${Number.isFinite(A2)?A2:"?"}`);
-  if (de)  jal.push(`anniv. ${fmt(de)} — ${Number.isFinite(E)?E:"?"}`);
-  L.push(jal.length?`<p>Repères : ${jal.join(" ; ")}.</p>`:`<p class="muted">Repères : fin N-1 → AP1 → AP2 → anniversaire.</p>`);
+  // Repères
+  const R=[];
+  if (ds)  R.push(`fin N-1 ${fmt(ds)} : <b>${Number.isFinite(S)?S:"?"}</b>`);
+  if (da1) R.push(`AP1 ${fmt(da1)} : <b>${Number.isFinite(A1)?A1:"?"}</b>`);
+  if (da2) R.push(`AP2 ${fmt(da2)} : <b>${Number.isFinite(A2)?A2:"?"}</b>`);
+  if (de)  R.push(`anniv. ${fmt(de)} : <b>${Number.isFinite(E)?E:"?"}</b>`);
+  L.push(R.length?`<p>Quatre repères jalonnent l’histoire : ${R.join(" • ")}.</p>`:`<p class="muted">Repères attendus : fin N-1 → AP1 → AP2 → anniversaire.</p>`);
 
-  if (da1 && da2){
-    L.push(`<p>Entre AP1 et AP2 : <b>${pctText(k1)} %</b> père • <b>${pctText(1-k1)} %</b> fils.</p>`);
-  }
+  // Mécanique de répartition
+  if (da1 && da2) L.push(`<p><b>Segment 2 (AP1→AP2)</b> : père <b>${pctText(k1)} %</b>, fils <b>${pctText(1-k1)} %</b>.</p>`);
   if (de){
     if (coefsOK2){
-      L.push(`<p>Après AP2 : <b>${pctText(k2p)} %</b> père • <b>${pctText(k2f)} %</b> fils • <b>${pctText(k2c)} %</b> petit-fils (somme 100 %).</p>`);
+      L.push(`<p><b>Segment 3 (après AP2)</b> : père <b>${pctText(k2p)} %</b> • fils <b>${pctText(k2f)} %</b> • petit-fils <b>${pctText(k2c)} %</b> — somme <b>100 %</b>.</p>`);
     } else {
-      L.push(`<p class="muted">Après AP2, les trois coefficients doivent être dans [0,1] et sommer 1.</p>`);
+      L.push(`<p class="muted">Après AP2, indique trois coefficients dans [0,1] qui somment 1.</p>`);
     }
   }
 
+  // Décomposition lisible
   if (ready){
-    L.push(`<h4>Ce que disent les compteurs</h4>
-      <p>Avant AP1 : <b>${q1}</b> kWh au père.</p>
-      <p>AP1 → AP2 : <b>${q2}</b> kWh → père <b>${p1}</b> • fils <b>${c1}</b>.</p>
-      <p>Après AP2 : <b>${q3}</b> kWh → père <b>${p2}</b> • fils <b>${c2}</b> • petit-fils <b>${g2}</b>.</p>
-      <p><b>Total père :</b> <b>${totP}</b> kWh.</p>
-      <p>${okSeg2?"✅":"❌"} parts(AP1→AP2)=Q₂ • ${okSeg3?"✅":"❌"} parts(après AP2)=Q₃ • ${okDelta?"✅":"❌"} Q₁+Q₂+Q₃=Δindex.</p>`);
+    L.push(`<h4>Décomposition des quantités</h4>
+      <p><b>S1 — Avant AP1 :</b> ${A1} − ${S} = <b>${q1} kWh</b> (100 % père).</p>
+      <p><b>S2 — AP1 → AP2 :</b> ${A2} − ${A1} = <b>${q2} kWh</b> → père <b>${p1}</b> • fils <b>${c1}</b>.</p>
+      <p><b>S3 — Après AP2 :</b> ${E} − ${A2} = <b>${q3} kWh</b> → père <b>${p2}</b> • fils <b>${c2}</b> • petit-fils <b>${g2}</b>.</p>
+      <p><b>Total père attendu :</b> <b>${totP} kWh</b>.</p>`);
+
+    L.push(`<p>${okSeg2?"✅":"❌"} S2 : parts = Q₂ • ${okSeg3?"✅":"❌"} S3 : parts = Q₃ • ${okDelta?"✅":"❌"} S1+S2+S3 = Δindex.</p>`);
   } else if (ds && da1 && da2 && de && !validOrder){
-    L.push(`<p class="ko">⚠ Ordre : fin N-1 ≤ AP1 ≤ AP2 ≤ anniversaire et index croissants.</p>`);
+    L.push(`<p class="ko">⚠ Ordre incohérent : fin N-1 ≤ AP1 ≤ AP2 ≤ anniversaire et index croissants requis.</p>`);
   }
 
-  chroniqueLive2.innerHTML=L.join("");
+  // Manques
+  if (!ready){
+    const miss=[];
+    if(!FS||!FE) miss.push("période");
+    if(!ds||!Number.isFinite(S)) miss.push("index fin N-1");
+    if(!da1||!Number.isFinite(A1)) miss.push("index AP1");
+    if(!da2||!Number.isFinite(A2)) miss.push("index AP2");
+    if(!de||!Number.isFinite(E)) miss.push("index anniversaire");
+    if(!(k1>=0&&k1<=1)) miss.push("coef père AP1→AP2");
+    if(!coefsOK2) miss.push("coefs père/fils/petit-fils après AP2 (somme 1)");
+    if(miss.length) L.push(`<p class="muted">À compléter : ${miss.join(" • ")}.</p>`);
+  }
+
+  chrono2.innerHTML=L.join("");
+}
+
+// Histogramme empilé par segment (PF2)
+function drawStackedPF2(host, data){
+  host.innerHTML="";
+  const {q1,q2,q3,p1,c1,p2,c2,g2} = data;
+  const total = [q1,q2,q3].reduce((a,b)=>a+(Number.isFinite(b)?b:0),0);
+  const svgNS="http://www.w3.org/2000/svg";
+  const svg=document.createElementNS(svgNS,"svg");
+  svg.setAttribute("viewBox","0 0 1100 230");
+  svg.setAttribute("preserveAspectRatio","xMidYMid meet");
+  host.appendChild(svg);
+
+  function N(tag,attrs){const n=document.createElementNS(svgNS,tag);for(const k in attrs)n.setAttribute(k,attrs[k]);svg.appendChild(n);return n;}
+  function label(t,x,y,anchor="start",size=13){const n=N("text",{x,y,"text-anchor":anchor,"font-size":size,fill:"currentColor"}); n.textContent=t;}
+  function barRow(y, segments, title, qty){
+    // segments: [{w:number, color:string, text:string}]
+    const left=60, right=1040, width=right-left, height=28, radius=6;
+    const sumW=segments.reduce((s,s1)=>s+s1.w,0)||1;
+    let x=left;
+    // titre + quantité à gauche
+    label(`${title}`, left-10, y+20, "end", 13);
+    label(`${qty} kWh`, right+10, y+20, "start", 13);
+    segments.forEach(s=>{
+      const w = width*(s.w/sumW);
+      if(w<=0) return;
+      N("rect",{x, y, width:w, height, rx:radius, ry:radius, fill:s.color, opacity:0.9});
+      if(w>60) label(s.text, x+8, y+18, "start", 12);
+      x += w + 1;
+    });
+  }
+
+  // En-têtes
+  label("Histogramme par segment (ventilation des kWh)", 60, 26, "start", 14);
+
+  // Lignes
+  const row1Y=50, row2Y=100, row3Y=150;
+  // S1 : 100% père
+  barRow(row1Y, [
+    {w:q1, color:"var(--col-pere)", text:`père ${q1}`}
+  ], "S1 (avant AP1)", Number.isFinite(q1)?q1:0);
+
+  // S2 : père / fils
+  barRow(row2Y, [
+    {w:p1, color:"var(--col-pere)", text:`père ${p1}`},
+    {w:c1, color:"var(--col-fils)", text:`fils ${c1}`}
+  ], "S2 (AP1 → AP2)", Number.isFinite(q2)?q2:0);
+
+  // S3 : père / fils / petit-fils
+  barRow(row3Y, [
+    {w:p2, color:"var(--col-pere)", text:`père ${p2}`},
+    {w:c2, color:"var(--col-fils)", text:`fils ${c2}`},
+    {w:g2, color:"var(--col-petit)", text:`petit-fils ${g2}`}
+  ], "S3 (après AP2)", Number.isFinite(q3)?q3:0);
+
+  // Totaux
+  label(`Total période : ${total} kWh`, 60, 200, "start", 13);
 }
 
 function compute2(){
@@ -454,20 +518,17 @@ function compute2(){
   const S=asNum(iStart2.value), A1=asNum(iAP21.value), A2=asNum(iAP22.value), E=asNum(iEnd2.value);
   const k1=asNum(coef21_pere.value), k2p=asNum(coef22_pere.value), k2f=asNum(coef22_fils.value), k2c=asNum(coef22_petit.value);
 
-  const validOrder=(ds&&da1&&da2&&de)
-    ? (new Date(ds)<=new Date(da1) && new Date(da1)<=new Date(da2) && new Date(da2)<=new Date(de) && S<=A1 && A1<=A2 && A2<=E)
-    : false;
-
+  const validOrder=(ds&&da1&&da2&&de)?(new Date(ds)<=new Date(da1)&&new Date(da1)<=new Date(da2)&&new Date(da2)<=new Date(de)&& S<=A1 && A1<=A2 && A2<=E):false;
   const coefsOK2 = [k2p,k2f,k2c].every(x=>x>=0 && x<=1) && Math.abs((k2p+k2f+k2c)-1)<1e-6;
 
   let q1=NaN,q2=NaN,q3=NaN,p1=NaN,c1=NaN,p2=NaN,c2=NaN,g2=NaN,totP=NaN;
   let okSeg2=false, okSeg3=false, okDelta=false;
   const ready = ds&&da1&&da2&&de && [S,A1,A2,E].every(Number.isFinite) && Number.isFinite(k1) && coefsOK2 && validOrder;
 
-  if (ready){
+  if(ready){
     q1=A1-S; q2=A2-A1; q3=E-A2;
     p1=Math.round(q2*k1); c1=q2-p1;
-    p2=Math.round(q3*k2p); c2=Math.round(q3*k2f); g2=q3-p2-c2;
+    p2=Math.round(q3*k2p); c2=Math.round(q3*k2f); g2=q3-p2-c2; // petit-fils absorbe l’écart d’arrondi
     totP=q1+p1+p2;
 
     okSeg2 = (p1 + c1 === q2);
@@ -475,6 +536,7 @@ function compute2(){
     okDelta = ((E - S) === (q1 + q2 + q3));
   }
 
+  // Ligne de vie
   drawTimeline(timeline2,[
     {tag:"fstart", d:FS?new Date(FS):null},
     {tag:"fend",   d:FE?new Date(FE):null},
@@ -482,20 +544,26 @@ function compute2(){
     {d:da1?new Date(da1):null,idx:A1},
     {d:da2?new Date(da2):null,idx:A2},
     {d:de?new Date(de):null,  idx:E},
+    {d:ds&&da1?new Date((+new Date(ds)+new Date(da1))/2):null,lbl:"S1 : 100 % père"},
+    {d:da1&&da2?new Date((+new Date(da1)+new Date(da2))/2):null,lbl:(Number.isFinite(k1)?`S2 : ${pctText(k1)} % père`:"S2")},
+    {d:da2&&de?new Date((+new Date(da2)+new Date(de))/2):null,lbl:(coefsOK2?`S3 : ${pctText(k2p)} % père`:"S3")}
   ]);
 
+  // Histogramme empilé par segment
+  drawStackedPF2(bars2, {q1,q2,q3,p1,c1,p2,c2,g2});
+
+  // BAP (père)
   if (ready){
     let line = [
       `BAP : AP1 au ${fmt(da1)} (index ${A1}) puis AP2 au ${fmt(da2)} (index ${A2})`,
-      `; avant AP1 : ${A1} - ${S} = ${q1}`,
-      `; entre AP1 et AP2 : ${A2} - ${A1} = ${q2} x ${pctText(k1)} % = ${p1}`,
-      `; après AP2 : ${E} - ${A2} = ${q3} x ${pctText(k2p)} % = ${p2}`,
-      `=> quantité attendue de la facture = ${q1} + ${p1} + ${p2}`
+      `; avant AP1 : ${A1} − ${S} = ${q1}`,
+      `; entre AP1 et AP2 : ${A2} − ${A1} = ${q2} × ${pctText(k1)} % = ${p1}`,
+      `; après AP2 : ${E} − ${A2} = ${q3} × ${pctText(k2p)} % = ${p2}`,
+      `⇒ quantité attendue de la facture (père) = ${q1} + ${p1} + ${p2}`
     ].join(" ");
-
     const pStr=(price2.value||"").trim(), pNum=asNum(pStr);
     bap2.value = (pStr && Number.isFinite(pNum))
-      ? `${line} soit ${totP} x ${pStr} = ${(totP*pNum).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})}€`
+      ? `${line} soit ${totP} × ${pStr} = ${(totP*pNum).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})}€`
       : line;
   } else {
     bap2.value = "";
@@ -543,8 +611,8 @@ window.addEventListener('DOMContentLoaded', ()=>{
     dAP21.value="2024-04-01";    iAP21.value="6200";
     dAP22.value="2024-09-15";    iAP22.value="9100";
     dEnd2.value="2024-12-31";    iEnd2.value="11200";
-    coef21_pere.value="0.70";    // AP1→AP2 : 70% père
-    coef22_pere.value="0.60";    // Après AP2 : 60/25/15
+    coef21_pere.value="0.70";    // S2 : 70% père
+    coef22_pere.value="0.60";    // S3 : 60/25/15
     coef22_fils.value="0.25";
     coef22_petit.value="0.15";
     price2.value="0.10";
@@ -555,7 +623,7 @@ window.addEventListener('DOMContentLoaded', ()=>{
     [fStart2,fEnd2,dStart2,iStart2,dAP21,iAP21,dAP22,iAP22,dEnd2,iEnd2,
      coef21_pere,coef22_pere,coef22_fils,coef22_petit,price2
     ].forEach(el=>el.value="");
-    chroniqueLive2.innerHTML=""; timeline2.innerHTML=""; bap2.value="";
+    chrono2.innerHTML=""; timeline2.innerHTML=""; bars2.innerHTML=""; bap2.value="";
   });
 
   // Démarrage : on précharge l’exemple PF1
