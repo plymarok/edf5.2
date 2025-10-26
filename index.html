@@ -34,15 +34,20 @@
   .help{grid-column:2/3;font-size:12px;color:var(--muted);margin-top:-6px;margin-bottom:6px}
   .mono{font-variant-numeric:tabular-nums}
   .muted{color:var(--muted)}
-  .pill{padding:6px 10px;border-radius:999px;background:var(--accent-weak)}
   .note{font-size:13px;color:var(--muted)}
   .ok{color:var(--ok)} .ko{color:var(--ko)}
   textarea{width:100%;min-height:120px;resize:vertical;border-radius:10px;border:1px solid var(--border);padding:10px}
   svg.timeline{width:100%;height:210px}
   .small{font-size:13px}
-  .chronique h4{margin:6px 0 8px}
-  .chronique p{margin:6px 0}
-  .chronique .tag{display:inline-block;background:var(--accent-weak);padding:2px 8px;border-radius:999px;margin-right:6px}
+
+  /* Zone blanche de commentaires (à droite) */
+  .commentbox{
+    min-height:150px; border:1px dashed var(--border); border-radius:12px;
+    padding:12px; background:var(--panel);
+  }
+  .commentbox h4{margin:4px 0 6px; font-size:14px}
+  .commentbox p{margin:6px 0; font-size:14px}
+  .commentbox .muted{font-size:13px}
 </style>
 </head>
 <body>
@@ -106,7 +111,9 @@
           <div><b>Total père attendu</b> = <span id="fatherTotal">—</span> kWh</div>
           <div id="checks" class="small muted" style="margin-top:6px"></div>
         </div>
-        <div id="badges" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"></div>
+
+        <!-- ❗ ICI : Zone blanche des commentaires dynamiques -->
+        <div id="commentBox" class="commentbox" style="margin-top:12px"></div>
       </div>
     </div>
 
@@ -151,8 +158,8 @@
   const q1El=document.getElementById('q1'), q2El=document.getElementById('q2');
   const afterFatherEl=document.getElementById('afterFather'), afterChildEl=document.getElementById('afterChild');
   const fatherTotalEl=document.getElementById('fatherTotal'), checks=document.getElementById('checks');
-  const badges=document.getElementById('badges'), timelineHost=document.getElementById('timeline'), bap=document.getElementById('bap');
-  const chronique=document.getElementById('chronique');
+  const timelineHost=document.getElementById('timeline'), bap=document.getElementById('bap');
+  const chronique=document.getElementById('chronique'), commentBox=document.getElementById('commentBox');
 
   // Utils
   const i18n = n => Number(n).toLocaleString("fr-FR");
@@ -180,7 +187,7 @@
     }
   }
 
-  // LIGNE DE VIE (graphique)
+  // LIGNE DE VIE graphique
   function drawTimeline(){
     timelineHost.innerHTML="";
     const svgNS="http://www.w3.org/2000/svg";
@@ -243,7 +250,42 @@
     }
   }
 
-  // CHRONIQUE (narration littéraire dynamique)
+  // COMMENTBOX (résumé littéraire court)
+  function renderCommentBox(values){
+    const {FS,FE,ds,S,da,A,de,E,k,q1,q2,fatherAfter,childAfter,fatherTotal,validOrder,ok1,ok2,ready} = values;
+    const out=[];
+    // Période
+    if(FS && FE){
+      out.push(`<h4>Période</h4><p>${guessPeriodLabel(FS,FE)} : <b>${fmt(FS)}</b> → <b>${fmt(FE)}</b>.</p>`);
+    }else{
+      out.push(`<h4>Période</h4><p class="muted">Indique le début et la fin de la facture.</p>`);
+    }
+    // Jalons
+    out.push(`<h4>Repères</h4>`);
+    out.push(`<p>${ds?`Fin N-1 : <b>${fmt(ds)}</b>${Number.isFinite(S)?` — ${raw(S)}`:""}.`:`<span class="muted">Fin N-1 manquante.</span>`}</p>`);
+    out.push(`<p>${da?`AP : <b>${fmt(da)}</b>${Number.isFinite(A)?` — ${raw(A)}`:""}.`:`<span class="muted">Date d’AP manquante.</span>`}</p>`);
+    out.push(`<p>${de?`Anniversaire : <b>${fmt(de)}</b>${Number.isFinite(E)?` — ${raw(E)}`:""}.`:`<span class="muted">Anniversaire manquant.</span>`}</p>`);
+
+    // Coef & découpage
+    if(k>=0 && k<=1){
+      out.push(`<p>Ventilation après AP : père <b>${pctText(k)} %</b> • fils <b>${pctText(1-k)} %</b>.</p>`);
+    }else{
+      out.push(`<p class="muted">Renseigne le coef père après AP (0 ↔ 1).</p>`);
+    }
+
+    // Résumé calculé
+    if(ready){
+      out.push(`<h4>Découpage & quantités</h4>
+        <p>Avant AP : <b>${raw(q1)} kWh</b> (père 100 %). Après AP : <b>${raw(q2)} kWh</b> → père <b>${raw(fatherAfter)} kWh</b>, fils <b>${raw(childAfter)} kWh</b>.</p>
+        <p><b>Total père attendu :</b> <b>${raw(fatherTotal)} kWh</b>.</p>
+        <p>${ok1?'✅':'❌'} père après + fils après = Q_après • ${ok2?'✅':'❌'} Q_avant + Q_après = Δindex.</p>`);
+    }else if(ds && da && de){
+      if(!validOrder) out.push(`<p class="ko">⚠ Ordre incohérent : vérifie <b>fin N-1 ≤ AP ≤ anniversaire</b> et les index croissants.</p>`);
+    }
+    commentBox.innerHTML = out.join("");
+  }
+
+  // CHRONIQUE détaillée
   function renderChronique(values){
     const {
       FS, FE, ds, S, da, A, de, E, k,
@@ -252,36 +294,32 @@
     } = values;
 
     const parts=[];
-    // 1) Cadre
     if(FS && FE){
       parts.push(`<h4>Cadre de la facture</h4>`);
-      parts.push(`<p>La facture que tu traites couvre la <span class="tag">${guessPeriodLabel(FS,FE)}</span>, du <b>${fmt(FS)}</b> au <b>${fmt(FE)}</b>.</p>`);
+      parts.push(`<p>La facture que tu traites couvre la <span class="pill" style="background:var(--accent-weak)">${guessPeriodLabel(FS,FE)}</span>, du <b>${fmt(FS)}</b> au <b>${fmt(FE)}</b>.</p>`);
     } else {
-      parts.push(`<h4>Cadre de la facture</h4><p class="muted">Renseigne le début et la fin : je reconnaîtrai s’il s’agit d’une période <i>semestrielle</i> ou <i>annuelle</i>.</p>`);
+      parts.push(`<h4>Cadre de la facture</h4><p class="muted">Renseigne le début et la fin : je reconnaîtrai s’il s’agit d’une période semestrielle ou annuelle.</p>`);
     }
 
-    // 2) Repères
     parts.push(`<h4>Repères d’index</h4>`);
     if(ds){ parts.push(`<p>Point de départ (fin N-1) : <b>${fmt(ds)}</b>${Number.isFinite(S)?` — index <b>${raw(S)}</b>`:""}.</p>`); }
     if(da){ parts.push(`<p>Augmentation de puissance le <b>${fmt(da)}</b>${Number.isFinite(A)?` — index <b>${raw(A)}</b>`:""}. À partir de ce jour, la production se ventile entre père et fils.</p>`); }
     if(de){ parts.push(`<p>Arrêt de la 1ʳᵉ facture post-AP à la date anniversaire : <b>${fmt(de)}</b>${Number.isFinite(E)?` — index <b>${raw(E)}</b>`:""}.</p>`); }
-    if(!ds && !da && !de){ parts.push(`<p class="muted">Renseigne les trois jalons : <i>fin N-1 → AP → anniversaire</i>.</p>`); }
+    if(!ds && !da && !de){ parts.push(`<p class="muted">Renseigne les trois jalons : fin N-1 → AP → anniversaire.</p>`); }
 
-    // 3) Découpage logique
     if(ds && da){
       parts.push(`<h4>Découpage de la production</h4>`);
-      parts.push(`<p>Avant AP : du <b>${fmt(ds)}</b> au <b>${fmt(da)}</b> → <b>100 %</b> de la production au <b>père</b>.</p>`);
+      parts.push(`<p>Avant AP : du <b>${fmt(ds)}</b> au <b>${fmt(da)}</b> → <b>100 %</b> au <b>père</b>.</p>`);
       if(de){
         if(Number.isFinite(k)){
           const filsPct = pctText(1-k);
-          parts.push(`<p>Après AP : du <b>${fmt(da)}</b> au <b>${fmt(de)}</b> → <b>${pctText(k)} %</b> au <b>père</b> et <b>${filsPct} %</b> au <b>fils</b>.</p>`);
+          parts.push(`<p>Après AP : du <b>${fmt(da)}</b> au <b>${fmt(de)}</b> → <b>${pctText(k)} %</b> au père et <b>${filsPct}</b> au fils.</p>`);
         } else {
-          parts.push(`<p>Après AP : du <b>${fmt(da)}</b> au <b>${fmt(de)}</b> → renseigne le <b>coef père</b> pour ventiler père/fils.</p>`);
+          parts.push(`<p>Après AP : du <b>${fmt(da)}</b> au <b>${fmt(de)}</b> → renseigne le <b>coef père</b> pour ventiler.</p>`);
         }
       }
     }
 
-    // 4) Quantités / Contrôles
     if(Number.isFinite(S) && Number.isFinite(A) && Number.isFinite(E) && (k>=0 && k<=1) && validOrder){
       parts.push(`<h4>Quantités attendues</h4>`);
       parts.push(`<p>Avant AP : <b>${raw(A)} − ${raw(S)} = ${raw(q1)} kWh</b> (père 100 %).<br>
@@ -289,19 +327,17 @@
       Total père attendu : <b>${raw(fatherTotal)} kWh</b>.</p>`);
 
       parts.push(`<h4>Auto-contrôles</h4>`);
-      parts.push(`<p>${ok1?`✅`:`❌`} <i>père après + fils après = Q_après</i> • ${ok2?`✅`:`❌`} <i>Q_avant + Q_après = Δindex</i>.</p>`);
+      parts.push(`<p>${ok1?`✅`:`❌`} père après + fils après = Q_après • ${ok2?`✅`:`❌`} Q_avant + Q_après = Δindex.</p>`);
     }
 
-    // 5) Aides / KO
     if(ds && da && de && (!validOrder || !Number.isFinite(S) || !Number.isFinite(A) || !Number.isFinite(E))){
-      parts.push(`<h4>À corriger pour pouvoir facturer</h4>`);
-      if(!validOrder) parts.push(`<p>• Vérifie l’ordre temporel : <b>fin N-1 ≤ AP ≤ anniversaire</b> et des <b>index croissants</b>.</p>`);
-      if(!Number.isFinite(S)) parts.push(`<p>• Renseigne l’index à la <b>fin N-1</b>.</p>`);
-      if(!Number.isFinite(A)) parts.push(`<p>• Renseigne l’<b>index le jour d’AP</b> (tolérance J±1).</p>`);
-      if(!Number.isFinite(E)) parts.push(`<p>• Renseigne l’<b>index à la date anniversaire</b>.</p>`);
-      if(!(k>=0 && k<=1)) parts.push(`<p>• Renseigne le <b>coef père</b> (entre 0 et 1) ; le fils reçoit le complément.</p>`);
+      parts.push(`<h4>À corriger</h4>`);
+      if(!validOrder) parts.push(`<p>• Vérifie l’ordre temporel : <b>fin N-1 ≤ AP ≤ anniversaire</b> et les <b>index croissants</b>.</p>`);
+      if(!Number.isFinite(S)) parts.push(`<p>• Saisir l’index de <b>fin N-1</b>.</p>`);
+      if(!Number.isFinite(A)) parts.push(`<p>• Saisir l’<b>index le jour d’AP</b> (tolérance J±1).</p>`);
+      if(!Number.isFinite(E)) parts.push(`<p>• Saisir l’<b>index à l’anniversaire</b>.</p>`);
+      if(!(k>=0 && k<=1)) parts.push(`<p>• Saisir le <b>coef père</b> (0 → 1).</p>`);
     }
-
     chronique.innerHTML = parts.join("");
   }
 
@@ -318,8 +354,8 @@
     const validOrder = (ds && da && de) ? (new Date(ds)<=new Date(da) && new Date(da)<=new Date(de) && S<=A && A<=E) : false;
 
     let q1=NaN,q2=NaN,fatherAfter=NaN,childAfter=NaN,fatherTotal=NaN, ok1=false, ok2=false;
-
     const ready = ds && da && de && Number.isFinite(S) && Number.isFinite(A) && Number.isFinite(E) && (k>=0 && k<=1) && validOrder;
+
     if(ready){
       q1=A-S; q2=E-A;
       fatherAfter=Math.round(q2*k);
@@ -340,17 +376,6 @@
       checks.textContent="Complète la période, les 3 jalons (dates + index) et le coef père pour calculer.";
     }
 
-    // Badges résumé
-    const pill = t=>`<span class="pill">${t}</span>`;
-    const badgesArr = [
-      (FS && FE) ? pill(`<b>${guessPeriodLabel(FS,FE)}</b> : ${fmt(FS)} → ${fmt(FE)}`) : "",
-      ds ? pill(`Fin N-1 : ${fmt(ds)} — ${Number.isFinite(S)?i18n(S):"index ?"}`) : "",
-      da ? pill(`AP : ${fmt(da)} — ${Number.isFinite(A)?i18n(A):"index ?"}`) : "",
-      de ? pill(`Anniv. : ${fmt(de)} — ${Number.isFinite(E)?i18n(E):"index ?"}`) : "",
-      (k>=0 && k<=1) ? pill(`Coef père : ${pctText(k)} % • fils : ${pctText(1-k)} %`) : ""
-    ].filter(Boolean);
-    badges.innerHTML = badgesArr.join("");
-
     // BAP normé
     const coefPct=pctText(k);
     if(ready){
@@ -358,7 +383,6 @@
                  `soit avant augmentation de puissance : ${raw(A)} - ${raw(S)} = ${raw(q1)} ` +
                  `+ après augmentation de puissance : ${raw(E)} - ${raw(A)} = ${raw(q2)} x ${coefPct} % = ${raw(fatherAfter)} ` +
                  `=> quantité attendue de la facture = ${raw(q1)} + ${raw(fatherAfter)}`;
-
       const pStr=(price.value||"").trim(), pNum=asNum(pStr);
       if(pStr && Number.isFinite(pNum)){
         const amount=(fatherTotal*pNum).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -369,8 +393,10 @@
       bap.value="";
     }
 
-    // Chronique
-    renderChronique({FS,FE,ds,S,da,A,de,E,k,q1,q2,fatherAfter,childAfter,fatherTotal,validOrder,ok1,ok2});
+    // Zone blanche (résumé court) + chronique détaillée
+    const pack={FS,FE,ds,S,da,A,de,E,k,q1,q2,fatherAfter,childAfter,fatherTotal,validOrder,ok1,ok2,ready};
+    renderCommentBox(pack);
+    renderChronique(pack);
   }
 
   // Écouteurs
@@ -395,10 +421,10 @@
   // Vider
   document.getElementById('clear').onclick=()=>{
     [fStart,fEnd,dStart,iStart,dAP,iAP,dEnd,iEnd,coef,price].forEach(el=>el.value="");
-    coefHints.textContent=""; badges.innerHTML="";
+    coefHints.textContent="";
     q1El.textContent=q2El.textContent=afterFatherEl.textContent=afterChildEl.textContent=fatherTotalEl.textContent="—";
     checks.textContent="Saisis la période, les 3 jalons et le coef père : le calcul et le BAP apparaissent.";
-    bap.value=""; drawTimeline(); renderChronique({});
+    bap.value=""; drawTimeline(); renderCommentBox({}); chronique.innerHTML="";
   };
 
   // Copier BAP
