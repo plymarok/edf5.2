@@ -446,11 +446,15 @@ function renderChroniqueLive2(v){
   chrono2.innerHTML=L.join("");
 }
 
+/* === Histogramme avec légendes sous chaque segment === */
 function drawStackedPF2(host, data){
+  const {q1,q2,q3,p1,c1,p2,c2,g2, ds, da1, da2, de} = data;
+
   host.innerHTML="";
   const svgNS="http://www.w3.org/2000/svg";
   const svg=document.createElementNS(svgNS,"svg");
-  svg.setAttribute("viewBox","0 0 1100 230");
+  // hauteur augmentée pour casquettes sous barres
+  svg.setAttribute("viewBox","0 0 1100 300");
   svg.setAttribute("preserveAspectRatio","xMidYMid meet");
   host.appendChild(svg);
 
@@ -458,12 +462,14 @@ function drawStackedPF2(host, data){
   function label(t,x,y,anchor="start",size=13){const n=N("text",{x,y,"text-anchor":anchor,"font-size":size,fill:"currentColor"}); n.textContent=t;}
   function safe(n){return Number.isFinite(n)?n:0}
 
-  function barRow(y, segments, title, qty){
+  function barRow(y, segments, title, qty, caption){
     const left=60, right=1040, width=right-left, height=28, radius=6;
     const sumW=segments.reduce((s,s1)=>s+safe(s1.w),0)||1;
     let x=left;
+
     label(`${title}`, left-10, y+20, "end", 13);
     label(`${safe(qty)} kWh`, right+10, y+20, "start", 13);
+
     segments.forEach(s=>{
       const w = width*(safe(s.w)/sumW);
       if(w<=0) return;
@@ -471,17 +477,23 @@ function drawStackedPF2(host, data){
       if(w>60) label(s.text, x+8, y+18, "start", 12);
       x += w + 1;
     });
+
+    // légende sous la barre
+    label(caption, left, y+46, "start", 12);
   }
 
   label("Histogramme par segment (ventilation des kWh)", 60, 26, "start", 14);
-  const {q1,q2,q3,p1,c1,p2,c2,g2} = data;
 
-  barRow(50,  [{w:q1, color:"var(--col-pere)", text:`père ${safe(q1)}`}], "S1 (avant AP1)", q1);
-  barRow(100, [{w:p1, color:"var(--col-pere)", text:`père ${safe(p1)}`},{w:c1, color:"var(--col-fils)", text:`fils ${safe(c1)}`}], "S2 (AP1 → AP2)", q2);
-  barRow(150, [{w:p2, color:"var(--col-pere)", text:`père ${safe(p2)}`},{w:c2, color:"var(--col-fils)", text:`fils ${safe(c2)}`},{w:g2, color:"var(--col-petit)", text:`petit-fils ${safe(g2)}`}], "S3 (après AP2)", q3);
+  const capS1 = `S1 (avant AP1) : du ${fmtDate(ds)} au ${fmtDate(da1)} → ${safe(q1)} kWh, 100 % père.`;
+  const capS2 = `S2 (AP1 → AP2) : du ${fmtDate(da1)} au ${fmtDate(da2)} → ${safe(q2)} kWh dont ${safe(p1)} père & ${safe(c1)} fils.`;
+  const capS3 = `S3 (après AP2) : du ${fmtDate(da2)} au ${fmtDate(de)} → ${safe(q3)} kWh dont ${safe(p2)} père, ${safe(c2)} fils, ${safe(g2)} petit-fils.`;
+
+  barRow(60,  [{w:q1, color:"var(--col-pere)", text:`père ${safe(q1)}`}], "S1 (avant AP1)", q1, capS1);
+  barRow(130, [{w:p1, color:"var(--col-pere)", text:`père ${safe(p1)}`},{w:c1, color:"var(--col-fils)", text:`fils ${safe(c1)}`}], "S2 (AP1 → AP2)", q2, capS2);
+  barRow(200, [{w:p2, color:"var(--col-pere)", text:`père ${safe(p2)}`},{w:c2, color:"var(--col-fils)", text:`fils ${safe(c2)}`},{w:g2, color:"var(--col-petit)", text:`petit-fils ${safe(g2)}`}], "S3 (après AP2)", q3, capS3);
 
   const tot = safe(q1)+safe(q2)+safe(q3);
-  label(`Total période : ${tot} kWh`, 60, 200, "start", 13);
+  label(`Total période : ${tot} kWh`, 60, 270, "start", 13);
 }
 
 function compute2(){
@@ -523,7 +535,8 @@ function compute2(){
     {d:(da2&&de)?new Date((+new Date(da2)+(+new Date(de)))/2):null,lbl:(coefsOK2?`S3 : ${pctText(k2p)} % père`:"S3")}
   ]);
 
-  drawStackedPF2(bars2, {q1,q2,q3,p1,c1,p2,c2,g2});
+  // ⬇️ on passe aussi les dates pour les légendes sous barres
+  drawStackedPF2(bars2, { q1,q2,q3,p1,c1,p2,c2,g2, ds, da1, da2, de });
 
   if (ready){
     let line = [
