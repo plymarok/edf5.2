@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AP — Exemples & BAP avec ligne de vie</title>
+  <meta name="color-scheme" content="light dark" />
+  <style>
+    :root{
+      --bg:#f7f7fb; --panel:#ffffff; --text:#16161b; --muted:#6b7280;
+      --accent:#4f46e5; --accent-weak:#eef2ff;
+      --ok:#10b981; --ko:#ef4444; --warn:#f59e0b;
+      --border:#e7e7ef; --shadow:0 10px 26px rgba(16,24,40,.06);
+    }
+    html[data-theme="dark"]{
+      --bg:#0f1115; --panel:#161a22; --text:#e9e9f2; --muted:#9aa0aa;
+      --accent:#8b93ff; --accent-weak:#1e2330; --border:#262b36; --shadow:0 12px 28px rgba(0,0,0,.45);
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; background:var(--bg); color:var(--text);
+      font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    .topbar{position:sticky; top:0; z-index:10; display:flex; align-items:center; justify-content:space-between;
+      padding:14px 18px; background:var(--panel); border-bottom:1px solid var(--border); box-shadow:var(--shadow)}
+    .topbar h1{font-size:18px; margin:0}
+    .actions{display:flex; gap:10px; align-items:center}
+    .btn{border-radius:10px; border:1px solid var(--border); background:var(--panel); color:var(--text); padding:10px 14px; cursor:pointer}
+    .btn.primary{background:var(--accent); color:#fff; border-color:transparent}
+    .btn.ghost{background:transparent}
+    .control{background:transparent; border:1px solid var(--border); border-radius:10px; padding:10px 12px; color:var(--text)}
+    .control:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-weak)}
+    .container{max-width:1100px; margin:18px auto; padding:0 18px; display:grid; gap:18px}
+    .panel{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:16px 16px 20px; box-shadow:var(--shadow)}
+    .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px}
+    .muted{color:var(--muted)}
+    .narrative{line-height:1.6}
+    .kpi{display:flex; gap:10px; flex-wrap:wrap}
+    .pill{padding:6px 10px; border-radius:999px; background:var(--accent-weak)}
+    svg.timeline{width:100%; height:180px}
+    .mono{font-variant-numeric:tabular-nums}
+    textarea{width:100%; min-height:120px; resize:vertical; border-radius:10px; border:1px solid var(--border); padding:10px}
+    .small{font-size:13px}
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>Augmentation de puissance — Exemples, BAP & Ligne de vie</h1>
+    <div class="actions">
+      <select id="pick" class="control"></select>
+      <button id="random" class="btn">Nouvel exemple aléatoire</button>
+      <button id="theme" class="btn ghost">🌙/☀️</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="panel">
+      <div class="grid">
+        <div>
+          <h3>Paramètres de l’exemple</h3>
+          <div class="narrative small muted">Tu peux changer le cas via la liste ou générer un exemple aléatoire cohérent.</div>
+          <div class="kpi" style="margin-top:8px">
+            <span class="pill"><b>Avant AP</b> : <span id="lblBefore" class="mono"></span></span>
+            <span class="pill"><b>AP</b> : <span id="lblAP" class="mono"></span></span>
+            <span class="pill"><b>Après AP</b> : <span id="lblAfter" class="mono"></span></span>
+            <span class="pill"><b>Coef père</b> : <span id="lblCoef" class="mono"></span></span>
+          </div>
+        </div>
+        <div>
+          <h3>Quantités</h3>
+          <div class="narrative mono">
+            <div>Q<sub>avant</sub> = <span id="q1"></span> kWh (100 % père)</div>
+            <div>Q<sub>après</sub> = <span id="q2"></span> kWh</div>
+            <div>Part père après = <span id="afterFather"></span> kWh &nbsp;•&nbsp; Part fils après = <span id="afterChild"></span> kWh</div>
+            <div><b>Total père attendu</b> = <span id="fatherTotal"></span> kWh</div>
+            <div class="small muted">Auto-contrôle : (père après + fils après = Q<sub>après</sub>) & et (Q<sub>avant</sub> + Q<sub>après</sub> = Δindex)</div>
+          </div>
+        </div>
+      </div>
+      <div id="timeline" style="margin-top:12px"></div>
+    </section>
+
+    <section class="panel">
+      <h3>BAP (commentaire prêt à copier)</h3>
+      <textarea id="bap" class="mono" readonly></textarea>
+      <div style="display:flex; gap:10px; margin-top:8px">
+        <button id="copy" class="btn primary">Copier le BAP</button>
+        <span class="muted small">Tolérance ± 1 kWh</span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>Explication courte</h3>
+      <div class="narrative">
+        La première facture qui suit une <b>augmentation de puissance</b> se <b>découpe en deux</b> :
+        <ul>
+          <li><b>Avant AP</b> : de la fin de facture précédente à la date d’AP → <b>100 % père</b>.</li>
+          <li><b>Après AP</b> : de la date d’AP à la date anniversaire → <b>application du coefficient</b> (père).</li>
+        </ul>
+        Le commentaire <b>BAP</b> justifie les chiffres : on rappelle la <b>date d’AP</b> et son <b>index</b>,
+        puis on déroule les deux calculs (avant / après) et on conclut par la <b>quantité attendue</b> sur la facture du père.
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // ---------------------------
+    // Thème
+    // ---------------------------
+    (function(){
+      const root=document.documentElement, key="ap-theme";
+      const saved=localStorage.getItem(key); if(saved) root.setAttribute("data-theme", saved);
+      document.getElementById("theme").onclick=()=>{
+        const next = root.getAttribute("data-theme")==="dark"?"light":"dark";
+        root.setAttribute("data-theme", next); localStorage.setItem(key, next);
+      };
+    })();
+
+    // ---------------------------
+    // Données d'exemple
+    // ---------------------------
+    const EXAMPLES = [
+      {
+        label:"Exemple A — 27/05/2020 (coef 80%)",
+        startDate:"2019-10-24", startIndex:0,
+        apDate:"2020-05-27", apIndex:1715,
+        endDate:"2020-10-23", endIndex:3112,
+        fatherCoef:0.80
+      },
+      {
+        label:"Exemple B — 20/08/2024 (coef 70%)",
+        startDate:"2024-03-05", startIndex:12000,
+        apDate:"2024-08-20", apIndex:18450,
+        endDate:"2025-03-05", endIndex:25380,
+        fatherCoef:0.70
+      },
+      {
+        label:"Exemple C — 14/11/2024 (coef 69,74%)",
+        startDate:"2024-11-01", startIndex:35000,
+        apDate:"2024-11-14", apIndex:37000,
+        endDate:"2024-11-30", endIndex:40500,
+        fatherCoef:0.6974
+      }
+    ];
+
+    // ---------------------------
+    // Utilitaires
+    // ---------------------------
+    const fmtDate = s => new Date(s+"T00:00:00").toLocaleDateString("fr-FR");
+    const pct = x => (x*100).toLocaleString("fr-FR",{maximumFractionDigits:2})+" %";
+    const i18n = n => Number(n).toLocaleString("fr-FR");
+    const round = n => Math.round(n);
+
+    // ---------------------------
+    // Interface
+    // ---------------------------
+    const pick = document.getElementById("pick");
+    const randomBtn = document.getElementById("random");
+    const q1El = document.getElementById("q1");
+    const q2El = document.getElementById("q2");
+    const afterFatherEl = document.getElementById("afterFather");
+    const afterChildEl = document.getElementById("afterChild");
+    const fatherTotalEl = document.getElementById("fatherTotal");
+    const lblBefore = document.getElementById("lblBefore");
+    const lblAP = document.getElementById("lblAP");
+    const lblAfter = document.getElementById("lblAfter");
+    const lblCoef = document.getElementById("lblCoef");
+    const bap = document.getElementById("bap");
+    const copyBtn = document.getElementById("copy");
+    const timelineHost = document.getElementById("timeline");
+
+    EXAMPLES.forEach((e,i)=>{
+      const opt = document.createElement("option");
+      opt.value=i; opt.textContent=e.label;
+      pick.appendChild(opt);
+    });
+
+    function compute(e){
+      const q1 = e.apIndex - e.startIndex;
+      const q2 = e.endIndex - e.apIndex;
+      const fatherAfterRaw = q2 * e.fatherCoef;
+      const fatherAfter = Math.round(fatherAfterRaw);
+      const childAfter = q2 - fatherAfter;
+      const fatherTotal = q1 + fatherAfter;
+      return {q1,q2,fatherAfter,fatherAfterRaw,childAfter,fatherTotal};
+    }
+
+    function drawTimeline(e){
+      timelineHost.innerHTML = "";
+      const svgNS="http://www.w3.org/2000/svg";
+      const svg=document.createElementNS(svgNS,"svg");
+      svg.setAttribute("class","timeline");
+      svg.setAttribute("viewBox","0 0 1100 180");
+      svg.setAttribute("preserveAspectRatio","xMidYMid meet");
+      timelineHost.appendChild(svg);
+
+      const start=new Date(e.startDate), ap=new Date(e.apDate), end=new Date(e.endDate);
+      const X=d=>40+((d-start)/(end-start))*1020;
+
+      line(X(start),80,X(end),80,6,"#d39b00"); // ligne principale
+      vmark(X(start)); vmark(X(ap)); vmark(X(end));
+
+      text(fmtDate(e.startDate),X(start),30,"middle");
+      text(fmtDate(e.apDate)+" (AP)",X(ap),30,"middle");
+      text(fmtDate(e.endDate),X(end),30,"middle");
+
+      text(i18n(e.startIndex),X(start),130,"middle");
+      text(i18n(e.apIndex),X(ap),130,"middle");
+      text(i18n(e.endIndex),X(end),130,"middle");
+
+      const mid1=(X(start)+X(ap))/2, mid2=(X(ap)+X(end))/2;
+      label(mid1, 155, "100 % père (avant AP)");
+      label(mid2, 155, `${(e.fatherCoef*100).toLocaleString("fr-FR",{maximumFractionDigits:2})} % père (après AP)`);
+
+      function node(tag,attrs){const n=document.createElementNS(svgNS,tag);for(const k in attrs)n.setAttribute(k,attrs[k]);svg.appendChild(n);return n;}
+      function line(x1,y1,x2,y2,w,col){node("line",{x1,y1,x2,y2,stroke:col||"currentColor","stroke-width":w,"stroke-linecap":"round"});}
+      function vmark(x){node("line",{x1:x,y1:60,x2:x,y2:100,stroke:"currentColor","stroke-width":3});}
+      function text(t,x,y,anchor){const n=node("text",{x,y,"text-anchor":anchor||"start","font-size":14}); n.textContent=t;}
+      function label(x,y,t){const n=node("text",{x,y,"text-anchor":"middle","font-size":14}); n.textContent=t;}
+    }
+
+    function render(idx){
+      const e = (idx!=null)? EXAMPLES[idx] : EXAMPLES[0];
+      const k = compute(e);
+
+      lblBefore.textContent = `${fmtDate(e.startDate)} — ${i18n(e.startIndex)}`;
+      lblAP.textContent     = `${fmtDate(e.apDate)} — ${i18n(e.apIndex)}`;
+      lblAfter.textContent  = `${fmtDate(e.endDate)} — ${i18n(e.endIndex)}`;
+      lblCoef.textContent   = pct(e.fatherCoef);
+
+      q1El.textContent = i18n(k.q1);
+      q2El.textContent = i18n(k.q2);
+      afterFatherEl.textContent = i18n(k.fatherAfter);
+      afterChildEl.textContent  = i18n(k.childAfter);
+      fatherTotalEl.textContent = i18n(k.fatherTotal);
+
+      // BAP
+      bap.value =
+        `BAP : augmentation de puissance au ${fmtDate(e.apDate)} avec un index de ${i18n(e.apIndex)} ; ` +
+        `avant AP : ${i18n(e.apIndex)} − ${i18n(e.startIndex)} = ${i18n(k.q1)} ; ` +
+        `après AP : ${i18n(e.endIndex)} − ${i18n(e.apIndex)} = ${i18n(k.q2)} × ` +
+        `${(e.fatherCoef*100).toLocaleString("fr-FR",{maximumFractionDigits:2})}% = ${i18n(k.fatherAfter)} ⇒ ` +
+        `quantité attendue de la facture (père) = ${i18n(k.q1)} + ${i18n(k.fatherAfter)} = ${i18n(k.fatherTotal)} kWh (tolérance ± 1 kWh).`;
+
+      drawTimeline(e);
+      pick.value = EXAMPLES.indexOf(e);
+    }
+
+    pick.onchange = ()=>render(Number(pick.value));
+
+    randomBtn.onclick = ()=>{
+      // Génère un exemple cohérent
+      const year = 2024 + Math.floor(Math.random()*2); // 2024..2025
+      const start = new Date(year, Math.floor(Math.random()*6), 1+Math.floor(Math.random()*27));
+      const ap = new Date(start.getTime() + 60*24*3600*1000 + Math.random()*120*24*3600*1000); // 2–6 mois après
+      const end = new Date(ap.getTime() + 60*24*3600*1000 + Math.random()*120*24*3600*1000);   // 2–6 mois après
+      const base = Math.floor( (Math.random()*20000) );
+      const q1 = 2000 + Math.floor(Math.random()*6000);
+      const q2 = 2000 + Math.floor(Math.random()*7000);
+      const coefList = [0.60,0.70,0.80,0.6974];
+      const coef = coefList[Math.floor(Math.random()*coefList.length)];
+
+      const e = {
+        label:`Exemple ${Math.random().toString(36).slice(2,5).toUpperCase()} — ${ap.toLocaleDateString("fr-FR")} (coef ${(coef*100).toFixed(2)}%)`,
+        startDate: start.toISOString().slice(0,10), startIndex: base,
+        apDate: ap.toISOString().slice(0,10), apIndex: base+q1,
+        endDate: end.toISOString().slice(0,10), endIndex: base+q1+q2,
+        fatherCoef: coef
+      };
+      EXAMPLES.unshift(e);
+      const opt = document.createElement("option");
+      opt.value=0; opt.textContent=e.label;
+      pick.prepend(opt);
+      render(0);
+    };
+
+    copyBtn.onclick = ()=>{ bap.select(); document.execCommand('copy'); copyBtn.textContent="Copié ✓"; setTimeout(()=>copyBtn.textContent="Copier le BAP",1000); };
+
+    // initial
+    render(0);
+  </script>
+</body>
+</html>
