@@ -53,16 +53,16 @@
 <header class="topbar">
   <h1>Calcul normé — Augmentations de puissance</h1>
   <div class="actions">
-    <button id="theme" class="btn ghost">🌙/☀️</button>
+    <button id="theme" class="btn ghost" type="button">🌙/☀️</button>
   </div>
 </header>
 
 <nav class="tabs">
-  <button class="tab active" data-panel="pf1">Père & Fils (1 AP)</button>
-  <button class="tab" data-panel="pf2">Père, Fils & Petit-fils (2 AP)</button>
+  <button class="tab active" data-panel="pf1" type="button">Père & Fils (1 AP)</button>
+  <button class="tab" data-panel="pf2" type="button">Père, Fils & Petit-fils (2 AP)</button>
 </nav>
 
-<!-- ============== ONGLET 1 : PÈRE & FILS (1 AP) — TON MODÈLE INCHANGÉ ============== -->
+<!-- ============== ONGLET 1 : PÈRE & FILS (1 AP) — MODELE INCHANGÉ ============== -->
 <main id="pf1" class="container tab-panel active">
   <section class="panel">
     <h3>1) Renseigne le cas — Père & Fils (1 AP)</h3>
@@ -88,9 +88,9 @@
         </div>
 
         <div style="display:flex;gap:8px;margin-top:10px">
-          <button id="exA1" class="btn">Exemple (70 %)</button>
-          <button id="exB1" class="btn">Exemple (80 %)</button>
-          <button id="clear1" class="btn">Vider</button>
+          <button id="exA1" class="btn" type="button">Exemple (70 %)</button>
+          <button id="exB1" class="btn" type="button">Exemple (80 %)</button>
+          <button id="clear1" class="btn" type="button">Vider</button>
         </div>
       </div>
 
@@ -106,7 +106,7 @@
     <h3>2) BAP — Commentaire normé</h3>
     <textarea id="bap1" class="mono" readonly></textarea>
     <div style="display:flex;gap:10px;margin-top:8px">
-      <button id="copy1" class="btn primary">Copier le BAP</button>
+      <button id="copy1" class="btn primary" type="button">Copier le BAP</button>
       <span class="muted">Tolérance ± 1 kWh • Arrondi part père</span>
     </div>
   </section>
@@ -144,8 +144,8 @@
         <div class="row"><label>Prix (€/kWh) <span class="muted">(optionnel)</span></label><input id="price2" type="text" class="control" placeholder="0.10"></div>
 
         <div style="display:flex;gap:8px;margin-top:10px">
-          <button id="ex2" class="btn">Exemple 2 AP</button>
-          <button id="clear2" class="btn">Vider</button>
+          <button id="ex2" class="btn" type="button">Exemple 2 AP</button>
+          <button id="clear2" class="btn" type="button">Vider</button>
         </div>
       </div>
 
@@ -161,7 +161,7 @@
     <h3>2) BAP — Commentaire normé</h3>
     <textarea id="bap2" class="mono" readonly></textarea>
     <div style="display:flex;gap:10px;margin-top:8px">
-      <button id="copy2" class="btn primary">Copier le BAP</button>
+      <button id="copy2" class="btn primary" type="button">Copier le BAP</button>
       <span class="muted">Après AP2, les 3 coefficients doivent sommer 1</span>
     </div>
   </section>
@@ -227,7 +227,6 @@ function drawTimeline(host, marks){
   function text(t,x,y,anchor="start",size=14){const n=N("text",{x,y,"text-anchor":anchor,"font-size":size}); n.textContent=t;}
   function line(x1,y1,x2,y2,w,col){N("line",{x1,y1,x2,y2,stroke:col||"currentColor","stroke-width":w,"stroke-linecap":"round"});}
 
-  // Période si fournie
   const fstart=marks.find(m=>m.tag==="fstart"), fend=marks.find(m=>m.tag==="fend");
   if(fstart && fend){
     const x1=X(fstart.d), x2=X(fend.d);
@@ -252,9 +251,9 @@ const dAP1=document.getElementById('dAP1'), iAP1=document.getElementById('iAP1')
 const dEnd1=document.getElementById('dEnd1'), iEnd1=document.getElementById('iEnd1');
 const coef1=document.getElementById('coef1'), price1=document.getElementById('price1');
 const timeline1=document.getElementById('timeline1'), bap1=document.getElementById('bap1');
-let chroniqueLive = document.getElementById('chroniqueLive1'); // utilisé par ta fonction initiale
+let chroniqueLive = document.getElementById('chroniqueLive1'); // PF1
 
-// TA FONCTION INITIALE — INCHANGÉE
+// Fonction récit (ta version inchangée)
 function renderChroniqueLive(values){
   const {
     FS, FE, ds, S, da, A, de, E, k,
@@ -264,7 +263,6 @@ function renderChroniqueLive(values){
 
   const L = [];
 
-  // 1) Cadrage élégant
   if (FS && FE) {
     L.push(
       `<h4>Le cadre</h4>
@@ -279,7 +277,6 @@ function renderChroniqueLive(values){
     );
   }
 
-  // 2) Les jalons, racontés
   const jalons = [];
   if (ds) jalons.push(`à la <b>clôture précédente</b> (${fmt(ds)}), l’index du père est <b>${Number.isFinite(S)?String(S):"?"}</b> kWh`);
   if (da) jalons.push(`le <b>jour de l’AP</b> (${fmt(da)}), on relève <b>${Number.isFinite(A)?String(A):"?"}</b> kWh`);
@@ -290,7 +287,6 @@ function renderChroniqueLive(values){
       : `<p class="muted">J’attends les trois repères : fin N-1 → AP → anniversaire.</p>`
   );
 
-  // 3) La bascule de puissance
   if (da && de) {
     if (k >= 0 && k <= 1) {
       L.push(
@@ -303,7 +299,6 @@ function renderChroniqueLive(values){
     }
   }
 
-  // 4) Les quantités, dites clairement
   if (ready) {
     L.push(
       `<h4>Ce que disent les compteurs</h4>
@@ -325,7 +320,6 @@ function renderChroniqueLive(values){
     );
   }
 
-  // 5) Ce qui manque encore
   if (!ready) {
     const manques = [];
     if (!FS || !FE) manques.push("période de facturation");
@@ -343,7 +337,7 @@ function renderChroniqueLive(values){
 
 // Calculs PF1
 function compute1(){
-  chroniqueLive = document.getElementById('chroniqueLive1'); // pointer sur la zone PF1
+  chroniqueLive = document.getElementById('chroniqueLive1'); // s'assure de viser l'onglet 1
   const FS=fStart1.value, FE=fEnd1.value;
   const ds=dStart1.value, da=dAP1.value, de=dEnd1.value;
   const S=asNum(iStart1.value), A=asNum(iAP1.value), E=asNum(iEnd1.value);
@@ -365,18 +359,16 @@ function compute1(){
     ok2=((E-S)===(q1+q2));
   }
 
-  // Timeline
   drawTimeline(timeline1,[
     {tag:"fstart",d:FS?new Date(FS):null},
     {tag:"fend",d:FE?new Date(FE):null},
     {d:ds?new Date(ds):null,idx:S},
     {d:da?new Date(da):null,idx:A},
     {d:de?new Date(de):null,idx:E},
-    {d:ds&&da?new Date((+new Date(ds)+new Date(da))/2):null,lbl:"100 % père"},
-    {d:da&&de?new Date((+new Date(da)+new Date(de))/2):null,lbl:(k>=0&&k<=1?`${pctText(k)} % père`:"")}
+    {d:(ds&&da)?new Date((+new Date(ds)+(+new Date(da)))/2):null,lbl:"100 % père"},
+    {d:(da&&de)?new Date((+new Date(da)+(+new Date(de)))/2):null,lbl:(k>=0&&k<=1?`${pctText(k)} % père`:"")}
   ]);
 
-  // BAP
   const coefPct=pctText(k);
   if(ready){
     let line = `BAP : augmentation de puissance au ${fmt(da)} avec un index de ${raw(A)} ` +
@@ -395,28 +387,6 @@ function compute1(){
 
   renderChroniqueLive({FS,FE,ds,S,da,A,de,E,k,q1,q2,fatherAfter,childAfter,fatherTotal,validOrder,ok1,ok2,ready});
 }
-
-// Listeners PF1
-[fStart1,fEnd1,dStart1,iStart1,dAP1,iAP1,dEnd1,iEnd1,coef1,price1].forEach(el=>el.addEventListener('input', compute1));
-document.getElementById('exA1').onclick=()=>{
-  fStart1.value="2024-03-05"; fEnd1.value="2025-03-05";
-  dStart1.value="2024-03-05"; iStart1.value="12000";
-  dAP1.value="2024-08-20";   iAP1.value="18450";
-  dEnd1.value="2025-03-05";  iEnd1.value="25380";
-  coef1.value="0.70";        price1.value="0.10"; compute1();
-};
-document.getElementById('exB1').onclick=()=>{
-  fStart1.value="2019-10-24"; fEnd1.value="2020-10-23";
-  dStart1.value="2019-10-24"; iStart1.value="0";
-  dAP1.value="2020-05-27";   iAP1.value="1715";
-  dEnd1.value="2020-10-23";  iEnd1.value="3112";
-  coef1.value="0.80";        price1.value=""; compute1();
-};
-document.getElementById('clear1').onclick=()=>{
-  [fStart1,fEnd1,dStart1,iStart1,dAP1,iAP1,dEnd1,iEnd1,coef1,price1].forEach(el=>el.value="");
-  document.getElementById('chroniqueLive1').innerHTML=""; timeline1.innerHTML=""; bap1.value="";
-};
-document.getElementById('copy1').onclick=()=>{ bap1.select(); document.execCommand('copy'); };
 
 /* =================== ONGLET 2 : PÈRE, FILS & PETIT-FILS (2 AP) =================== */
 const fStart2=document.getElementById('fStart2'), fEnd2=document.getElementById('fEnd2');
@@ -536,34 +506,61 @@ function compute2(){
                         validOrder, coefsOK2, okSeg2, okSeg3, okDelta, ready});
 }
 
-// Listeners PF2 + boutons
-[fStart2,fEnd2,dStart2,iStart2,dAP21,iAP21,dAP22,iAP22,dEnd2,iEnd2,
- coef21_pere,coef22_pere,coef22_fils,coef22_petit,price2
-].forEach(el=>el.addEventListener('input', compute2));
+/* =================== Listeners & INIT =================== */
+window.addEventListener('DOMContentLoaded', ()=>{
+  // PF1
+  [fStart1,fEnd1,dStart1,iStart1,dAP1,iAP1,dEnd1,iEnd1,coef1,price1].forEach(el=>el.addEventListener('input', compute1));
+  document.getElementById('exA1').addEventListener('click', ()=>{
+    fStart1.value="2024-03-05"; fEnd1.value="2025-03-05";
+    dStart1.value="2024-03-05"; iStart1.value="12000";
+    dAP1.value="2024-08-20";   iAP1.value="18450";
+    dEnd1.value="2025-03-05";  iEnd1.value="25380";
+    coef1.value="0.70";        price1.value="0.10";
+    compute1();
+  });
+  document.getElementById('exB1').addEventListener('click', ()=>{
+    fStart1.value="2019-10-24"; fEnd1.value="2020-10-23";
+    dStart1.value="2019-10-24"; iStart1.value="0";
+    dAP1.value="2020-05-27";   iAP1.value="1715";
+    dEnd1.value="2020-10-23";  iEnd1.value="3112";
+    coef1.value="0.80";        price1.value="";
+    compute1();
+  });
+  document.getElementById('clear1').addEventListener('click', ()=>{
+    [fStart1,fEnd1,dStart1,iStart1,dAP1,iAP1,dEnd1,iEnd1,coef1,price1].forEach(el=>el.value="");
+    document.getElementById('chroniqueLive1').innerHTML=""; timeline1.innerHTML=""; bap1.value="";
+  });
+  document.getElementById('copy1').addEventListener('click', ()=>{ bap1.select(); document.execCommand('copy'); });
 
-document.getElementById('ex2').onclick=()=>{
-  fStart2.value="2024-01-01";  fEnd2.value="2024-12-31";
-  dStart2.value="2024-01-01";  iStart2.value="5000";
-  dAP21.value="2024-04-01";    iAP21.value="6200";
-  dAP22.value="2024-09-15";    iAP22.value="9100";
-  dEnd2.value="2024-12-31";    iEnd2.value="11200";
-  coef21_pere.value="0.70";    // AP1→AP2 : 70% père
-  coef22_pere.value="0.60";    // Après AP2 : 60/25/15
-  coef22_fils.value="0.25";
-  coef22_petit.value="0.15";
-  price2.value="0.10";
-  compute2();
-};
-document.getElementById('clear2').onclick=()=>{
+  // PF2
   [fStart2,fEnd2,dStart2,iStart2,dAP21,iAP21,dAP22,iAP22,dEnd2,iEnd2,
    coef21_pere,coef22_pere,coef22_fils,coef22_petit,price2
-  ].forEach(el=>el.value="");
-  chroniqueLive2.innerHTML=""; timeline2.innerHTML=""; bap2.value="";
-};
-document.getElementById('copy2').onclick=()=>{ bap2.select(); document.execCommand('copy'); };
+  ].forEach(el=>el.addEventListener('input', compute2));
 
-/* ============== Init : on charge un exemple dans l’onglet 1 ============== */
-document.getElementById('exA1').click();
+  document.getElementById('ex2').addEventListener('click', ()=>{
+    fStart2.value="2024-01-01";  fEnd2.value="2024-12-31";
+    dStart2.value="2024-01-01";  iStart2.value="5000";
+    dAP21.value="2024-04-01";    iAP21.value="6200";
+    dAP22.value="2024-09-15";    iAP22.value="9100";
+    dEnd2.value="2024-12-31";    iEnd2.value="11200";
+    coef21_pere.value="0.70";    // AP1→AP2 : 70% père
+    coef22_pere.value="0.60";    // Après AP2 : 60/25/15
+    coef22_fils.value="0.25";
+    coef22_petit.value="0.15";
+    price2.value="0.10";
+    compute2();
+  });
+
+  document.getElementById('clear2').addEventListener('click', ()=>{
+    [fStart2,fEnd2,dStart2,iStart2,dAP21,iAP21,dAP22,iAP22,dEnd2,iEnd2,
+     coef21_pere,coef22_pere,coef22_fils,coef22_petit,price2
+    ].forEach(el=>el.value="");
+    chroniqueLive2.innerHTML=""; timeline2.innerHTML=""; bap2.value="";
+  });
+
+  // Démarrage : on précharge l’exemple PF1
+  document.getElementById('exA1').click();
+});
 </script>
 </body>
 </html>
