@@ -1,87 +1,407 @@
-function renderChroniqueLive(values){
-  const {
-    FS, FE, ds, S, da, A, de, E, k,
-    q1, q2, fatherAfter, childAfter, fatherTotal,
-    validOrder, ok1, ok2, ready
-  } = values;
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Calcul normé — Augmentation de puissance (père & fils)</title>
+<meta name="color-scheme" content="light dark" />
+<style>
+  :root{
+    --bg:#f7f7fb; --panel:#fff; --text:#16161b; --muted:#6b7280;
+    --accent:#4f46e5; --accent-weak:#eef2ff;
+    --border:#e7e7ef; --shadow:0 10px 26px rgba(16,24,40,.06);
+    --ok:#10b981; --ko:#ef4444;
+  }
+  html[data-theme="dark"]{
+    --bg:#0f1115; --panel:#161a22; --text:#e9e9f2; --muted:#9aa0aa;
+    --accent:#8b93ff; --accent-weak:#1e2330; --border:#262b36; --shadow:0 12px 28px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+  .topbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:14px 18px;background:var(--panel);border-bottom:1px solid var(--border);box-shadow:var(--shadow)}
+  .topbar h1{font-size:18px;margin:0}
+  .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .btn{border-radius:10px;border:1px solid var(--border);background:var(--panel);color:var(--text);padding:10px 14px;cursor:pointer}
+  .btn.primary{background:var(--accent);color:#fff;border-color:transparent}
+  .btn.ghost{background:transparent}
+  .control{background:transparent;border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);width:100%}
+  .control:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-weak)}
+  .container{max-width:1100px;margin:18px auto;padding:0 18px;display:grid;gap:18px}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px 16px 20px;box-shadow:var(--shadow)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+  .row{display:grid;grid-template-columns:230px 1fr;gap:10px;align-items:center;margin:8px 0}
+  .help{grid-column:2/3;font-size:12px;color:var(--muted);margin-top:-6px;margin-bottom:6px}
+  .mono{font-variant-numeric:tabular-nums}
+  .muted{color:var(--muted)}
+  .note{font-size:13px;color:var(--muted)}
+  textarea{width:100%;min-height:120px;resize:vertical;border-radius:10px;border:1px solid var(--border);padding:10px}
+  svg.timeline{width:100%;height:210px}
+  .small{font-size:13px}
 
-  const L = []; // paragraphs
+  /* Chronique live (colonne droite) */
+  .chroniqueLive{
+    min-height:260px;border:1px solid var(--border);border-radius:12px;
+    padding:14px;background:var(--panel);
+  }
+  .chroniqueLive h4{margin:6px 0 8px}
+  .chroniqueLive p{margin:6px 0}
+  .chip{display:inline-block;background:var(--accent-weak);padding:2px 8px;border-radius:999px}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <h1>Calcul normé — Augmentation de puissance (père & fils)</h1>
+  <div class="actions">
+    <button id="exA" class="btn">Exemple (70 % père)</button>
+    <button id="exB" class="btn">Exemple (80 % père)</button>
+    <button id="clear" class="btn">Vider le formulaire</button>
+    <button id="theme" class="btn ghost">🌙/☀️</button>
+  </div>
+</header>
 
-  // 1) Cadre poétique mais précis
-  if (FS && FE) {
-    L.push(
-      `<h4>Récit de la facture</h4>
-       <p>Nous sommes sur la <span class="chip">${guessPeriodLabel(FS,FE)}</span>,
-       qui s’ouvre le <b>${fmt(FS)}</b> et s’achève le <b>${fmt(FE)}</b>.
-       C’est dans ce cadre que nous allons démêler la part du père et celle du fils.</p>`
-    );
-  } else {
-    L.push(
-      `<h4>Récit de la facture</h4>
-       <p class="muted">Commence par préciser le début et la fin de période : je poserai ensuite les jalons et calculerai tout le reste.</p>`
-    );
+<main class="container">
+  <section class="panel">
+    <h3>1) Renseigne le cas</h3>
+    <div class="grid">
+      <!-- Colonne gauche : formulaire -->
+      <div>
+        <h4>Période de facturation (facture à traiter)</h4>
+        <div class="row"><label>Début de période</label><input id="fStart" type="date" class="control"></div>
+        <div class="help">Début de la facture (ex. 01/07 pour S2).</div>
+        <div class="row"><label>Fin de période</label><input id="fEnd" type="date" class="control"></div>
+        <div class="help">Fin de la facture (ex. 31/12 pour S2).</div>
+
+        <h4 style="margin-top:12px">Trois jalons d’index</h4>
+        <div class="row"><label>Fin de facture N-1</label><input id="dStart" type="date" class="control"></div>
+        <div class="help">Date de fin de la facture précédente (avant AP).</div>
+
+        <div class="row"><label>Index à fin N-1 (père)</label><input id="iStart" type="number" step="1" class="control" placeholder="ex. 0"></div>
+
+        <div class="row"><label>Date d’AP</label><input id="dAP" type="date" class="control"></div>
+        <div class="help">Jour de l’augmentation de puissance (mise en service B). Tolérance J±1.</div>
+
+        <div class="row"><label>Index le jour d’AP</label><input id="iAP" type="number" step="1" class="control" placeholder="ex. 1715"></div>
+
+        <div class="row"><label>Date anniversaire (père)</label><input id="dEnd" type="date" class="control"></div>
+        <div class="help">Date anniversaire du contrat père (fin de la 1ʳᵉ facture après AP).</div>
+
+        <div class="row"><label>Index à l’anniversaire</label><input id="iEnd" type="number" step="1" class="control" placeholder="ex. 3112"></div>
+
+        <div class="row">
+          <label>Coef père après AP</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="coef" type="number" step="0.01" min="0" max="1" class="control" placeholder="0.70 = 70 %">
+          </div>
+        </div>
+        <div class="help">Part de production affectée au père <b>après AP</b>. <span id="coefHints" class="mono"></span></div>
+
+        <div class="row"><label>Prix (€/kWh) <span class="muted">(optionnel)</span></label>
+          <input id="price" type="text" class="control" placeholder="0.10">
+        </div>
+        <div class="note">La phrase « soit … € » s’ajoute uniquement si le prix est renseigné.</div>
+      </div>
+
+      <!-- Colonne droite : Chronique live -->
+      <div>
+        <h4>Chronique (résumé en temps réel)</h4>
+        <div id="chroniqueLive" class="chroniqueLive"></div>
+      </div>
+    </div>
+
+    <!-- Ligne de vie graphique -->
+    <div id="timeline" style="margin-top:14px"></div>
+  </section>
+
+  <section class="panel">
+    <h3>2) BAP — Commentaire normé (copier/coller)</h3>
+    <textarea id="bap" class="mono" readonly></textarea>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button id="copy" class="btn primary">Copier le BAP</button>
+      <span class="muted small">Tolérance ± 1 kWh • Arrondi à l’unité sur la part père</span>
+    </div>
+  </section>
+</main>
+
+<!-- TOUT LE JS EST DANS CET UNIQUE <script> -->
+<script>
+  // Thème
+  (function(){
+    const root=document.documentElement, key="ap-theme";
+    const saved=localStorage.getItem(key); if(saved) root.setAttribute("data-theme", saved);
+    document.getElementById("theme").onclick=()=>{
+      const next=root.getAttribute("data-theme")==="dark"?"light":"dark";
+      root.setAttribute("data-theme", next); localStorage.setItem(key,next);
+    };
+  })();
+
+  // Sélecteurs
+  const fStart = document.getElementById('fStart'), fEnd = document.getElementById('fEnd');
+  const dStart = document.getElementById('dStart'), iStart=document.getElementById('iStart');
+  const dAP = document.getElementById('dAP'), iAP=document.getElementById('iAP');
+  const dEnd = document.getElementById('dEnd'), iEnd=document.getElementById('iEnd');
+  const coef=document.getElementById('coef'), price=document.getElementById('price');
+  const coefHints=document.getElementById('coefHints');
+
+  const timelineHost=document.getElementById('timeline'), bap=document.getElementById('bap');
+  const chroniqueLive=document.getElementById('chroniqueLive');
+
+  // Utils
+  const i18n = n => Number(n).toLocaleString("fr-FR");
+  const raw  = n => String(n);
+  const fmt  = s => s ? new Date(s+"T00:00:00").toLocaleDateString("fr-FR") : "";
+  const asNum = v => (v===""||v==null)? NaN : Number(String(v).replace(",","."));
+  const pctText = x => (x*100).toLocaleString("fr-FR",{maximumFractionDigits:2}).replace(/\u00a0/g," ");
+  const diffDays=(a,b)=>Math.round((new Date(b)-new Date(a))/(1000*3600*24));
+  function guessPeriodLabel(a,b){
+    if(!(a&&b)) return "";
+    const d=diffDays(a,b);
+    if(d>=330) return "période annuelle";
+    if(d>=170 && d<=200) return "période semestrielle";
+    return `période de ${d} jours`;
   }
 
-  // 2) Les trois jalons racontés
-  const jalons = [];
-  if (ds) jalons.push(`à la <b>clôture précédente</b> (${fmt(ds)}), le compteur du père indique <b>${Number.isFinite(S)?raw(S):"?"}</b> kWh`);
-  if (da) jalons.push(`le <b>jour de l’AP</b> (${fmt(da)}), l’index relevé est <b>${Number.isFinite(A)?raw(A):"?"}</b> kWh`);
-  if (de) jalons.push(`à la <b>date anniversaire</b> (${fmt(de)}), on lit <b>${Number.isFinite(E)?raw(E):"?"}</b> kWh`);
-  if (jalons.length){
-    L.push(`<p>${jalons.join(" ; ")}.</p>`);
-  } else {
-    L.push(`<p class="muted">Il me faut les trois repères : fin N-1 → AP → anniversaire.</p>`);
+  // Coef père/fils (hint dynamique)
+  function updateCoefHint(){
+    const k=asNum(coef.value);
+    if(k>=0 && k<=1){
+      const pere=pctText(k), fils=pctText(1-k);
+      coefHints.textContent = `(père = ${pere} % • fils = ${fils} %)`;
+    }else{
+      coefHints.textContent = "";
+    }
   }
 
-  // 3) La mécanique de répartition, dite en douceur
-  if (da && de) {
-    if (k >= 0 && k <= 1) {
+  // LIGNE DE VIE graphique
+  function drawTimeline(){
+    timelineHost.innerHTML="";
+    const svgNS="http://www.w3.org/2000/svg";
+    const svg=document.createElementNS(svgNS,"svg");
+    svg.setAttribute("class","timeline");
+    svg.setAttribute("viewBox","0 0 1100 210");
+    svg.setAttribute("preserveAspectRatio","xMidYMid meet");
+    timelineHost.appendChild(svg);
+
+    const marks=[];
+    function add(dateStr, label, idx){
+      if(dateStr){
+        const d=new Date(dateStr+"T00:00:00");
+        if(!isNaN(d)) marks.push({d,label,idx});
+      }
+    }
+    add(fStart.value,"Début période");
+    add(fEnd.value,"Fin période");
+    add(dStart.value,"Fin N-1",asNum(iStart.value));
+    add(dAP.value,"AP",asNum(iAP.value));
+    add(dEnd.value,"Anniversaire",asNum(iEnd.value));
+
+    if(marks.length<2){
+      const p=document.createElement("div");
+      p.className="muted small"; p.textContent="Saisis la période et les jalons : la ligne de vie se dessine automatiquement.";
+      timelineHost.appendChild(p); return;
+    }
+
+    marks.sort((a,b)=>a.d-b.d);
+    const min=marks[0].d, max=marks[marks.length-1].d;
+    const span=Math.max(1,(max-min));
+    const X=d=>40+((d-min)/span)*1020;
+
+    function node(tag,attrs){const n=document.createElementNS(svgNS,tag);for(const k in attrs)n.setAttribute(k,attrs[k]);svg.appendChild(n);return n;}
+    function line(x1,y1,x2,y2,w,col){node("line",{x1,y1,x2,y2,stroke:col||"currentColor","stroke-width":w,"stroke-linecap":"round"});}
+    function vmark(x){node("line",{x1:x,y1:70,x2:x,y2:110,stroke:"currentColor","stroke-width":3});}
+    function text(t,x,y,anchor="start",size=14){const n=node("text",{x,y,"text-anchor":anchor,"font-size":size}); n.textContent=t;}
+
+    if(fStart.value && fEnd.value){
+      const x1=X(new Date(fStart.value+"T00:00:00")), x2=X(new Date(fEnd.value+"T00:00:00"));
+      node("rect",{x:Math.min(x1,x2),y:78,width:Math.abs(x2-x1),height:24,fill:"var(--accent-weak)",opacity:"0.6"});
+      text("Période de facturation",(x1+x2)/2,66,"middle",12);
+    }
+
+    line(X(min),90,X(max),90,6,"#2a63e7");
+
+    marks.forEach(m=>{
+      const x=X(m.d); vmark(x);
+      text(fmt(m.d.toISOString().slice(0,10)),x,36,"middle");
+      if(Number.isFinite(m.idx)) text(raw(m.idx),x,140,"middle");
+    });
+
+    if(dStart.value && dAP.value){
+      const xs=X(new Date(dStart.value+"T00:00:00")), xa=X(new Date(dAP.value+"T00:00:00"));
+      text("100 % père (avant AP)",(xs+xa)/2,168,"middle");
+    }
+    if(dAP.value && dEnd.value){
+      const xa=X(new Date(dAP.value+"T00:00:00")), xe=X(new Date(dEnd.value+"T00:00:00"));
+      const k=asNum(coef.value); if(Number.isFinite(k)) text(`${pctText(k)} % père (après AP)`,(xa+xe)/2,168,"middle");
+    }
+  }
+
+  // CHRONIQUE LITTÉRAIRE (colonne droite)
+  function renderChroniqueLive(values){
+    const {
+      FS, FE, ds, S, da, A, de, E, k,
+      q1, q2, fatherAfter, childAfter, fatherTotal,
+      validOrder, ok1, ok2, ready
+    } = values;
+
+    const L = [];
+
+    // Cadre
+    if (FS && FE) {
       L.push(
-        `<p>À partir de l’AP, la production se partage mécaniquement :
-         <b>${pctText(k)} %</b> pour le père et <b>${pctText(1-k)} %</b> pour le fils.
-         Avant l’AP, tout revient au père.</p>`
+        `<h4>Récit de la facture</h4>
+         <p>Nous sommes sur la <span class="chip">${guessPeriodLabel(FS,FE)}</span>,
+         qui s’ouvre le <b>${fmt(FS)}</b> et s’achève le <b>${fmt(FE)}</b>.
+         C’est dans ce cadre que nous allons démêler la part du père et celle du fils.</p>`
       );
     } else {
-      L.push(`<p class="muted">Indique le <b>coefficient du père après AP</b> (entre 0 et 1) pour que je ventile père/fils.</p>`);
+      L.push(
+        `<h4>Récit de la facture</h4>
+         <p class="muted">Commence par préciser le début et la fin de période : je poserai ensuite les jalons et calculerai tout le reste.</p>`
+      );
     }
-  }
 
-  // 4) Si tout est en place, on raconte les quantités comme une histoire
-  if (ready) {
-    L.push(
-      `<h4>Ce que disent les compteurs</h4>
-       <p>De la fin N-1 au jour d’AP, la scène se déroule exclusivement pour le père :
-       <b>${raw(A)} − ${raw(S)} = ${raw(q1)} kWh</b>.</p>
-       <p>De l’AP à l’anniversaire, la production atteint <b>${raw(q2)} kWh</b>,
-       dont <b>${raw(fatherAfter)} kWh</b> au père et <b>${raw(childAfter)} kWh</b> au fils.</p>
-       <p>Au total, la part du père attendue sur la facture s’élève à
-       <b>${raw(fatherTotal)} kWh</b>.</p>`
-    );
-
-    L.push(
-      `<p>${ok1 ? "✅" : "❌"} <i>la part père après + la part fils après</i> retombe bien sur <i>Q_après</i> ;
-       ${ok2 ? "✅" : "❌"} <i>Q_avant + Q_après</i> reconstruit exactement le <i>Δindex</i>.
-       Autrement dit : la narration colle aux chiffres.</p>`
-    );
-  } else if (ds && da && de && !validOrder) {
-    L.push(
-      `<p class="ko">⚠ L’ordre des événements paraît contrarié.
-       Il doit se lire sans ambiguïté : <b>fin N-1 ≤ AP ≤ anniversaire</b>, avec des <b>index croissants</b>.</p>`
-    );
-  }
-
-  // 5) Dernier mot d’aide si tout n’est pas encore prêt
-  if (!ready) {
-    const manques = [];
-    if (!FS || !FE) manques.push("période de facturation");
-    if (!ds || !Number.isFinite(S)) manques.push("index de fin N-1");
-    if (!da || !Number.isFinite(A)) manques.push("index le jour d’AP");
-    if (!de || !Number.isFinite(E)) manques.push("index à l’anniversaire");
-    if (!(k>=0 && k<=1)) manques.push("coefficient du père après AP");
-    if (manques.length){
-      L.push(`<p class="muted">Encore un pas : ${manques.join(" • ")}.</p>`);
+    // Jalons
+    const jalons = [];
+    if (ds) jalons.push(`à la <b>clôture précédente</b> (${fmt(ds)}), le compteur du père indique <b>${Number.isFinite(S)?raw(S):"?"}</b> kWh`);
+    if (da) jalons.push(`le <b>jour de l’AP</b> (${fmt(da)}), l’index relevé est <b>${Number.isFinite(A)?raw(A):"?"}</b> kWh`);
+    if (de) jalons.push(`à la <b>date anniversaire</b> (${fmt(de)}), on lit <b>${Number.isFinite(E)?raw(E):"?"}</b> kWh`);
+    if (jalons.length){
+      L.push(`<p>Posons les trois repères : ${jalons.join(" ; ")}.</p>`);
+    } else {
+      L.push(`<p class="muted">Il me faut les trois repères : fin N-1 → AP → anniversaire.</p>`);
     }
+
+    // Ventilation
+    if (da && de) {
+      if (k >= 0 && k <= 1) {
+        L.push(
+          `<p>À partir de l’AP, la production se partage mécaniquement :
+           <b>${pctText(k)} %</b> pour le père et <b>${pctText(1-k)} %</b> pour le fils.
+           Avant l’AP, tout revient au père.</p>`
+        );
+      } else {
+        L.push(`<p class="muted">Indique le <b>coefficient du père après AP</b> (entre 0 et 1) pour que je ventile père/fils.</p>`);
+      }
+    }
+
+    // Quantités
+    if (ready) {
+      L.push(
+        `<h4>Ce que disent les compteurs</h4>
+         <p>De la fin N-1 au jour d’AP, la scène se déroule exclusivement pour le père :
+         <b>${raw(A)} − ${raw(S)} = ${raw(q1)} kWh</b>.</p>
+         <p>De l’AP à l’anniversaire, la production atteint <b>${raw(q2)} kWh</b>,
+         dont <b>${raw(fatherAfter)} kWh</b> au père et <b>${raw(childAfter)} kWh</b> au fils.</p>
+         <p>Au total, la part du père attendue sur la facture s’élève à
+         <b>${raw(fatherTotal)} kWh</b>.</p>`
+      );
+
+      L.push(
+        `<p>${ok1 ? "✅" : "❌"} <i>la part père après + la part fils après</i> retombe bien sur <i>Q_après</i> ;
+         ${ok2 ? "✅" : "❌"} <i>Q_avant + Q_après</i> reconstruit exactement le <i>Δindex</i>.
+         Autrement dit : la narration colle aux chiffres.</p>`
+      );
+    } else if (ds && da && de && !validOrder) {
+      L.push(
+        `<p class="ko">⚠ L’ordre des événements paraît contrarié.
+         Il doit se lire sans ambiguïté : <b>fin N-1 ≤ AP ≤ anniversaire</b>, avec des <b>index croissants</b>.</p>`
+      );
+    }
+
+    // Manques éventuels
+    if (!ready) {
+      const manques = [];
+      if (!FS || !FE) manques.push("période de facturation");
+      if (!ds || !Number.isFinite(S)) manques.push("index de fin N-1");
+      if (!da || !Number.isFinite(A)) manques.push("index le jour d’AP");
+      if (!de || !Number.isFinite(E)) manques.push("index à l’anniversaire");
+      if (!(k>=0 && k<=1)) manques.push("coefficient du père après AP");
+      if (manques.length){
+        L.push(`<p class="muted">Encore un pas : ${manques.join(" • ")}.</p>`);
+      }
+    }
+
+    chroniqueLive.innerHTML = L.join("");
   }
 
-  chroniqueLive.innerHTML = L.join("");
-}
+  // CALCULS + BAP
+  function compute(){
+    updateCoefHint();
+    drawTimeline();
+
+    const FS=fStart.value, FE=fEnd.value;
+    const ds=dStart.value, da=dAP.value, de=dEnd.value;
+    const S=asNum(iStart.value), A=asNum(iAP.value), E=asNum(iEnd.value);
+    const k=asNum(coef.value);
+
+    const validOrder = (ds && da && de) ? (new Date(ds)<=new Date(da) && new Date(da)<=new Date(de) && S<=A && A<=E) : false;
+
+    let q1=NaN,q2=NaN,fatherAfter=NaN,childAfter=NaN,fatherTotal=NaN, ok1=false, ok2=false;
+    const ready = ds && da && de && Number.isFinite(S) && Number.isFinite(A) && Number.isFinite(E) && (k>=0 && k<=1) && validOrder;
+
+    if(ready){
+      q1=A-S; q2=E-A;
+      fatherAfter=Math.round(q2*k);
+      childAfter=q2-fatherAfter;
+      fatherTotal=q1+fatherAfter;
+      ok1=(fatherAfter+childAfter===q2);
+      ok2=((E-S)===(q1+q2));
+    }
+
+    // BAP normé
+    const coefPct=pctText(k);
+    if(ready){
+      let line = `BAP : augmentation de puissance au ${fmt(da)} avec un index de ${raw(A)} ` +
+                 `soit avant augmentation de puissance : ${raw(A)} - ${raw(S)} = ${raw(q1)} ` +
+                 `+ après augmentation de puissance : ${raw(E)} - ${raw(A)} = ${raw(q2)} x ${coefPct} % = ${raw(fatherAfter)} ` +
+                 `=> quantité attendue de la facture = ${raw(q1)} + ${raw(fatherAfter)}`;
+      const pStr=(price.value||"").trim(), pNum=asNum(pStr);
+      if(pStr && Number.isFinite(pNum)){
+        const amount=(fatherTotal*pNum).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2});
+        line += ` soit ${raw(fatherTotal)} x ${pStr} = ${amount}€`;
+      }
+      bap.value=line;
+    }else{
+      bap.value="";
+    }
+
+    // Chronique live (texte à droite)
+    renderChroniqueLive({FS,FE,ds,S,da,A,de,E,k,q1,q2,fatherAfter,childAfter,fatherTotal,validOrder,ok1,ok2,ready});
+  }
+
+  // Écouteurs
+  [fStart,fEnd,dStart,iStart,dAP,iAP,dEnd,iEnd,coef,price].forEach(el=>el.addEventListener('input', compute));
+
+  // Exemples
+  document.getElementById('exA').onclick=()=>{
+    fStart.value="2024-03-05"; fEnd.value="2025-03-05";
+    dStart.value="2024-03-05"; iStart.value="12000";
+    dAP.value="2024-08-20";    iAP.value="18450";
+    dEnd.value="2025-03-05";   iEnd.value="25380";
+    coef.value="0.70"; price.value="0.10"; compute();
+  };
+  document.getElementById('exB').onclick=()=>{
+    fStart.value="2019-10-24"; fEnd.value="2020-10-23";
+    dStart.value="2019-10-24"; iStart.value="0";
+    dAP.value="2020-05-27";    iAP.value="1715";
+    dEnd.value="2020-10-23";   iEnd.value="3112";
+    coef.value="0.80"; price.value=""; compute();
+  };
+
+  // Vider
+  document.getElementById('clear').onclick=()=>{
+    [fStart,fEnd,dStart,iStart,dAP,iAP,dEnd,iEnd,coef,price].forEach(el=>el.value="");
+    coefHints.textContent=""; bap.value=""; drawTimeline(); chroniqueLive.innerHTML="";
+  };
+
+  // Copier BAP
+  document.getElementById('copy').onclick=()=>{
+    bap.select(); document.execCommand('copy');
+    const btn=document.getElementById('copy'); btn.textContent="Copié ✓"; setTimeout(()=>btn.textContent="Copier le BAP",900);
+  };
+
+  // Init
+  document.getElementById('exA').click();
+</script>
+</body>
+</html>
