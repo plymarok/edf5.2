@@ -1,141 +1,290 @@
 <!DOCTYPE html>
 <html lang="fr" data-theme="light">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AP — BAP normé, Ligne de vie & Période de facturation</title>
-  <meta name="color-scheme" content="light dark" />
-  <style>
-    :root{
-      --bg:#f7f7fb; --panel:#ffffff; --text:#16161b; --muted:#6b7280;
-      --accent:#4f46e5; --accent-weak:#eef2ff;
-      --ok:#10b981; --ko:#ef4444; --warn:#f59e0b;
-      --border:#e7e7ef; --shadow:0 10px 26px rgba(16,24,40,.06);
-    }
-    html[data-theme="dark"]{
-      --bg:#0f1115; --panel:#161a22; --text:#e9e9f2; --muted:#9aa0aa;
-      --accent:#8b93ff; --accent-weak:#1e2330; --border:#262b36; --shadow:0 12px 28px rgba(0,0,0,.45);
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{margin:0; background:var(--bg); color:var(--text);
-      font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
-    .topbar{position:sticky; top:0; z-index:10; display:flex; align-items:center; justify-content:space-between;
-      padding:14px 18px; background:var(--panel); border-bottom:1px solid var(--border); box-shadow:var(--shadow)}
-    .topbar h1{font-size:18px; margin:0}
-    .actions{display:flex; gap:10px; align-items:center}
-    .btn{border-radius:10px; border:1px solid var(--border); background:var(--panel); color:var(--text); padding:10px 14px; cursor:pointer}
-    .btn.primary{background:var(--accent); color:#fff; border-color:transparent}
-    .btn.ghost{background:transparent}
-    .control{background:transparent; border:1px solid var(--border); border-radius:10px; padding:10px 12px; color:var(--text); width:100%}
-    .control:focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-weak)}
-    .container{max-width:1100px; margin:18px auto; padding:0 18px; display:grid; gap:18px}
-    .panel{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:16px 16px 20px; box-shadow:var(--shadow)}
-    .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px}
-    .row{display:grid; grid-template-columns:210px 1fr; gap:10px; align-items:center; margin:8px 0}
-    .muted{color:var(--muted)}
-    .mono{font-variant-numeric:tabular-nums}
-    .pill{padding:6px 10px; border-radius:999px; background:var(--accent-weak)}
-    textarea{width:100%; min-height:120px; resize:vertical; border-radius:10px; border:1px solid var(--border); padding:10px}
-    svg.timeline{width:100%; height:190px}
-    .small{font-size:13px}
-    .note{margin-top:6px; font-size:13px}
-    .warn{color:var(--warn)}
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AP — BAP normé, ligne de vie dynamique & période</title>
+<meta name="color-scheme" content="light dark" />
+<style>
+  :root{
+    --bg:#f7f7fb; --panel:#fff; --text:#16161b; --muted:#6b7280;
+    --accent:#4f46e5; --accent-weak:#eef2ff;
+    --border:#e7e7ef; --shadow:0 10px 26px rgba(16,24,40,.06);
+  }
+  html[data-theme="dark"]{
+    --bg:#0f1115; --panel:#161a22; --text:#e9e9f2; --muted:#9aa0aa;
+    --accent:#8b93ff; --accent-weak:#1e2330; --border:#262b36; --shadow:0 12px 28px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+  .topbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;
+    padding:14px 18px;background:var(--panel);border-bottom:1px solid var(--border);box-shadow:var(--shadow)}
+  .topbar h1{font-size:18px;margin:0}
+  .actions{display:flex;gap:10px;align-items:center}
+  .btn{border-radius:10px;border:1px solid var(--border);background:var(--panel);color:var(--text);padding:10px 14px;cursor:pointer}
+  .btn.primary{background:var(--accent);color:#fff;border-color:transparent}
+  .btn.ghost{background:transparent}
+  .control{background:transparent;border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);width:100%}
+  .control:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-weak)}
+  .container{max-width:1100px;margin:18px auto;padding:0 18px;display:grid;gap:18px}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px 16px 20px;box-shadow:var(--shadow)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+  .row{display:grid;grid-template-columns:210px 1fr;gap:10px;align-items:center;margin:8px 0}
+  .mono{font-variant-numeric:tabular-nums}
+  .muted{color:var(--muted)}
+  .pill{padding:6px 10px;border-radius:999px;background:var(--accent-weak)}
+  textarea{width:100%;min-height:120px;resize:vertical;border-radius:10px;border:1px solid var(--border);padding:10px}
+  svg.timeline{width:100%;height:210px}
+  .small{font-size:13px}
+</style>
 </head>
 <body>
-  <header class="topbar">
-    <h1>Augmentation de puissance — BAP normé, Ligne de vie & Période</h1>
-    <div class="actions">
-      <button id="exA" class="btn">Charger exemple (80%)</button>
-      <button id="exB" class="btn">Charger exemple (70%)</button>
-      <button id="theme" class="btn ghost">🌙/☀️</button>
+<header class="topbar">
+  <h1>Augmentation de puissance — BAP normé & ligne de vie dynamique</h1>
+  <div class="actions">
+    <button id="exA" class="btn">Exemple (80%)</button>
+    <button id="exB" class="btn">Exemple (70%)</button>
+    <button id="theme" class="btn ghost">🌙/☀️</button>
+  </div>
+</header>
+
+<main class="container">
+  <section class="panel">
+    <h3>1) Renseigne le cas</h3>
+    <div class="grid">
+      <div>
+        <h4>Période de facturation</h4>
+        <div class="row"><label>Début</label><input id="fStart" type="date" class="control"></div>
+        <div class="row"><label>Fin</label><input id="fEnd" type="date" class="control"></div>
+
+        <h4 style="margin-top:10px">Trois jalons d’index</h4>
+        <div class="row"><label>Fin de facture N-1</label><input id="dStart" type="date" class="control"></div>
+        <div class="row"><label>Index à cette date</label><input id="iStart" type="number" step="1" class="control" placeholder="ex. 0"></div>
+        <div class="row"><label>Date d’AP</label><input id="dAP" type="date" class="control"></div>
+        <div class="row"><label>Index le jour d’AP</label><input id="iAP" type="number" step="1" class="control" placeholder="ex. 1715"></div>
+        <div class="row"><label>Date anniversaire</label><input id="dEnd" type="date" class="control"></div>
+        <div class="row"><label>Index à l’anniversaire</label><input id="iEnd" type="number" step="1" class="control" placeholder="ex. 3112"></div>
+
+        <div class="row"><label>Coef père après AP</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input id="coef" type="number" step="0.01" min="0" max="1" class="control" placeholder="0.80 = 80 %">
+            <span class="muted small">0,6974 ⇒ 69,74&nbsp;%</span>
+          </div>
+        </div>
+        <div class="row"><label>Prix (€/kWh) <span class="muted small">(facultatif)</span></label>
+          <input id="price" type="text" class="control" placeholder="0.10">
+        </div>
+      </div>
+
+      <div>
+        <h4>Quantités calculées</h4>
+        <div class="mono">
+          <div>Q<sub>avant</sub> = <span id="q1">—</span> kWh (100 % père)</div>
+          <div>Q<sub>après</sub> = <span id="q2">—</span> kWh</div>
+          <div>Part père après = <span id="afterFather">—</span> kWh • Part fils après = <span id="afterChild">—</span> kWh</div>
+          <div><b>Total père attendu</b> = <span id="fatherTotal">—</span> kWh</div>
+          <div id="checks" class="small muted" style="margin-top:4px"></div>
+        </div>
+        <div id="badges" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px"></div>
+      </div>
     </div>
-  </header>
 
-  <main class="container">
-    <section class="panel">
-      <h3>1) Renseigne le cas</h3>
-      <div class="grid">
-        <div>
-          <h4>Période de facturation (la facture que tu traites)</h4>
-          <div class="row"><label>Début de période</label><input id="fStart" type="date" class="control"></div>
-          <div class="row"><label>Fin de période</label><input id="fEnd" type="date" class="control"></div>
+    <!-- LIGNE DE VIE -->
+    <div id="timeline" style="margin-top:12px"></div>
+  </section>
 
-          <h4 style="margin-top:10px">Trois jalons d’index</h4>
-          <div class="row"><label>Fin de facture N-1</label><input id="dStart" type="date" class="control"></div>
-          <div class="row"><label>Index à cette date</label><input id="iStart" type="number" step="1" class="control" placeholder="ex. 0"></div>
-          <div class="row"><label>Date d’AP</label><input id="dAP" type="date" class="control"></div>
-          <div class="row"><label>Index le jour d’AP</label><input id="iAP" type="number" step="1" class="control" placeholder="ex. 1715"></div>
-          <div class="row"><label>Date anniversaire</label><input id="dEnd" type="date" class="control"></div>
-          <div class="row"><label>Index à l’anniversaire</label><input id="iEnd" type="number" step="1" class="control" placeholder="ex. 3112"></div>
+  <section class="panel">
+    <h3>2) BAP (commentaire normé prêt à copier)</h3>
+    <textarea id="bap" class="mono" readonly></textarea>
+    <div style="display:flex;gap:10px;margin-top:8px">
+      <button id="copy" class="btn primary">Copier le BAP</button>
+      <span class="muted small">Tolérance ± 1 kWh • Arrondi à l’unité sur la part père</span>
+    </div>
+  </section>
+</main>
 
-          <div class="row"><label>Coef père après AP</label>
-            <div style="display:flex; gap:8px; align-items:center">
-              <input id="coef" type="number" step="0.01" min="0" max="1" class="control" placeholder="0.80 = 80 %">
-              <span class="muted small">0,6974 ⇒ 69,74&nbsp;%</span>
-            </div>
-          </div>
-          <div class="row"><label>Prix (€/kWh) <span class="muted small">(facultatif)</span></label>
-            <input id="price" type="text" class="control" placeholder="0.10">
-          </div>
-          <div class="note muted">Tolérance index d’AP : <b>J ± 1</b> • Le fils prend <i>1 − coef père</i> après AP.</div>
-        </div>
+<script>
+  // Thème
+  (function(){
+    const root=document.documentElement, key="ap-theme";
+    const saved=localStorage.getItem(key); if(saved) root.setAttribute("data-theme", saved);
+    document.getElementById("theme").onclick=()=>{
+      const next=root.getAttribute("data-theme")==="dark"?"light":"dark";
+      root.setAttribute("data-theme", next); localStorage.setItem(key,next);
+    };
+  })();
 
-        <div>
-          <h4>Quantités calculées</h4>
-          <div class="mono">
-            <div>Q<sub>avant</sub> = <span id="q1">—</span> kWh (100 % père)</div>
-            <div>Q<sub>après</sub> = <span id="q2">—</span> kWh</div>
-            <div>Part père après = <span id="afterFather">—</span> kWh • Part fils après = <span id="afterChild">—</span> kWh</div>
-            <div><b>Total père attendu</b> = <span id="fatherTotal">—</span> kWh</div>
-            <div id="checks" class="small muted" style="margin-top:4px"></div>
-            <div id="periodWarn" class="small warn"></div>
-          </div>
+  // Sélecteurs
+  const fStart = document.getElementById('fStart'), fEnd = document.getElementById('fEnd');
+  const dStart = document.getElementById('dStart'), iStart=document.getElementById('iStart');
+  const dAP = document.getElementById('dAP'), iAP=document.getElementById('iAP');
+  const dEnd = document.getElementById('dEnd'), iEnd=document.getElementById('iEnd');
+  const coef=document.getElementById('coef'), price=document.getElementById('price');
 
-          <div id="badges" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px"></div>
-        </div>
-      </div>
+  const q1El=document.getElementById('q1'), q2El=document.getElementById('q2');
+  const afterFatherEl=document.getElementById('afterFather'), afterChildEl=document.getElementById('afterChild');
+  const fatherTotalEl=document.getElementById('fatherTotal'), checks=document.getElementById('checks');
+  const badges=document.getElementById('badges'), timelineHost=document.getElementById('timeline'), bap=document.getElementById('bap');
 
-      <div id="timeline" style="margin-top:12px"></div>
-    </section>
+  const i18n = n => Number(n).toLocaleString("fr-FR");
+  const raw  = n => String(n);
+  const fmt  = s => s ? new Date(s+"T00:00:00").toLocaleDateString("fr-FR") : "";
+  const asNum = v => (v===""||v==null)? NaN : Number(String(v).replace(",","."));
+  const pctText = x => (x*100).toLocaleString("fr-FR",{maximumFractionDigits:2}).replace(/\u00a0/g," ");
 
-    <section class="panel">
-      <h3>2) BAP (commentaire normé prêt à copier)</h3>
-      <textarea id="bap" class="mono" readonly></textarea>
-      <div style="display:flex; gap:10px; margin-top:8px">
-        <button id="copy" class="btn primary">Copier le BAP</button>
-        <span class="muted small">Tolérance ± 1 kWh • Arrondi à l’unité sur la part père</span>
-      </div>
-    </section>
-  </main>
+  // --- DESSIN dynamique (affiche même avec infos partielles)
+  function drawTimeline(ctx){
+    timelineHost.innerHTML="";
+    const svgNS="http://www.w3.org/2000/svg";
+    const svg=document.createElementNS(svgNS,"svg");
+    svg.setAttribute("class","timeline");
+    svg.setAttribute("viewBox","0 0 1100 210");
+    svg.setAttribute("preserveAspectRatio","xMidYMid meet");
+    timelineHost.appendChild(svg);
 
-  <script>
-    // Thème
-    (function(){
-      const root=document.documentElement, key="ap-theme";
-      const saved=localStorage.getItem(key); if(saved) root.setAttribute("data-theme", saved);
-      document.getElementById("theme").onclick=()=>{
-        const next = root.getAttribute("data-theme")==="dark"?"light":"dark";
-        root.setAttribute("data-theme", next); localStorage.setItem(key, next);
-      };
-    })();
+    // Collecte de toutes les dates disponibles
+    const marks=[];
+    function add(dateStr, label, idx, key){
+      if(dateStr){
+        const d=new Date(dateStr+"T00:00:00");
+        if(!isNaN(d)) marks.push({d,label,idx,key});
+      }
+    }
+    add(fStart.value,"Début période",null,"pStart");
+    add(fEnd.value,"Fin période",null,"pEnd");
+    add(dStart.value,"Fin N-1",asNum(iStart.value),"start");
+    add(dAP.value,"AP",asNum(iAP.value),"ap");
+    add(dEnd.value,"Anniversaire",asNum(iEnd.value),"end");
 
-    // Sélecteurs
-    const fStart = document.getElementById('fStart');
-    const fEnd   = document.getElementById('fEnd');
+    if(marks.length<2){ // rien à dessiner de pertinent
+      const p=document.createElement("div");
+      p.className="muted small"; p.textContent="Saisis des dates : la ligne de vie se dessine automatiquement.";
+      timelineHost.appendChild(p); return;
+    }
 
-    const dStart = document.getElementById('dStart');
-    const iStart = document.getElementById('iStart');
-    const dAP    = document.getElementById('dAP');
-    const iAP    = document.getElementById('iAP');
-    const dEnd   = document.getElementById('dEnd');
-    const iEnd   = document.getElementById('iEnd');
-    const coef   = document.getElementById('coef');
-    const price  = document.getElementById('price');
+    marks.sort((a,b)=>a.d-b.d);
+    const min=marks[0].d, max=marks[marks.length-1].d;
+    const span = Math.max(1, (max-min)); // éviter division par 0
+    const X=d=>40 + ((d-min)/span)*1020;
 
-    const q1El = document.getElementById('q1');
-    const q2El = document.getElementById('q2');
-    const afterFatherEl = document.getElementById('afterFather');
-    const afterChildEl  = document.getElementById('afterChild');
-    const fatherTotalEl = document.getElementById('fa
+    // Fonctions SVG
+    function node(tag,attrs){const n=document.createElementNS(svgNS,tag);for(const k in attrs)n.setAttribute(k,attrs[k]);svg.appendChild(n);return n;}
+    function line(x1,y1,x2,y2,w,col){node("line",{x1,y1,x2,y2,stroke:col||"currentColor","stroke-width":w,"stroke-linecap":"round"});}
+    function vmark(x){node("line",{x1:x,y1:70,x2:x,y2:110,stroke:"currentColor","stroke-width":3});}
+    function text(t,x,y,anchor="start",size=14,color="currentColor"){const n=node("text",{x,y,"text-anchor":anchor,"font-size":size,fill:color}); n.textContent=t;}
+
+    // Bande période de facturation si dispo
+    if(fStart.value && fEnd.value){
+      const x1=X(new Date(fStart.value+"T00:00:00")), x2=X(new Date(fEnd.value+"T00:00:00"));
+      node("rect",{x:Math.min(x1,x2), y:78, width:Math.abs(x2-x1), height:24, fill:"var(--accent-weak)", opacity:"0.6"});
+      text("Période de facturation", (x1+x2)/2, 68, "middle", 12);
+    }
+
+    // Ligne principale
+    line(X(min),90,X(max),90,6,"#2a63e7");
+
+    // Marqueurs + libellés (dates & index)
+    marks.forEach(m=>{
+      const x=X(m.d);
+      vmark(x);
+      text(fmt(m.d.toISOString().slice(0,10)), x, 36, "middle");
+      if(Number.isFinite(m.idx)) text(raw(m.idx), x, 140, "middle");
+    });
+
+    // Libellés segments si on peut
+    const hasStart = dStart.value && dAP.value;
+    const hasEnd   = dAP.value && dEnd.value;
+    if(hasStart){
+      const xs=X(new Date(dStart.value+"T00:00:00")), xa=X(new Date(dAP.value+"T00:00:00"));
+      text("100 % père (avant AP)", (xs+xa)/2, 168, "middle");
+    }
+    if(hasEnd){
+      const xa=X(new Date(dAP.value+"T00:00:00")), xe=X(new Date(dEnd.value+"T00:00:00"));
+      const k=asNum(coef.value); if(Number.isFinite(k)) text(`${pctText(k)} % père (après AP)`, (xa+xe)/2, 168, "middle");
+    }
+  }
+
+  // --- CALCULS + BAP (normé)
+  function compute(){
+    const S=asNum(iStart.value), A=asNum(iAP.value), E=asNum(iEnd.value);
+    const ds=dStart.value, da=dAP.value, de=dEnd.value;
+    const k=asNum(coef.value);
+
+    // Dessiner quoi qu'il arrive (progressif)
+    drawTimeline({});
+
+    // Si tous les champs nécessaires sont là, calculer + BAP
+    const ready = ds && da && de && Number.isFinite(S) && Number.isFinite(A) && Number.isFinite(E) && (k>=0 && k<=1);
+    if(!ready){
+      q1El.textContent=q2El.textContent=afterFatherEl.textContent=afterChildEl.textContent=fatherTotalEl.textContent="—";
+      checks.textContent="Complète les 3 jalons (dates + index) et le coef pour calculer.";
+      bap.value=""; return;
+    }
+
+    // Validations simples d'ordre
+    if(!(new Date(ds)<=new Date(da) && new Date(da)<=new Date(de)) || S>A || A>E){
+      q1El.textContent=q2El.textContent=afterFatherEl.textContent=afterChildEl.textContent=fatherTotalEl.textContent="—";
+      checks.textContent="KO : vérifie l’ordre des dates et des index (fin N-1 ≤ AP ≤ anniversaire ; index croissants).";
+      bap.value=""; return;
+    }
+
+    const q1=A-S, q2=E-A;
+    const fatherAfter=Math.round(q2*k);
+    const childAfter=q2-fatherAfter;
+    const fatherTotal=q1+fatherAfter;
+
+    q1El.textContent=i18n(q1);
+    q2El.textContent=i18n(q2);
+    afterFatherEl.textContent=i18n(fatherAfter);
+    afterChildEl.textContent=i18n(childAfter);
+    fatherTotalEl.textContent=i18n(fatherTotal);
+
+    const ok1 = (fatherAfter+childAfter===q2);
+    const ok2 = ((E-S)===(q1+q2));
+    checks.innerHTML=`${ok1?"✅":"❌"} (père après + fils après = Q_après) • ${ok2?"✅":"❌"} (Q_avant + Q_après = Δindex)`;
+
+    // BAP strictement normé (comme ton modèle)
+    const coefPct = pctText(k);
+    let line = `BAP : augmentation de puissance au ${fmt(da)} avec un index de ${raw(A)} ` +
+               `soit avant augmentation de puissance : ${raw(A)} - ${raw(S)} = ${raw(q1)} ` +
+               `+ après augmentation de puissance : ${raw(E)} - ${raw(A)} = ${raw(q2)} x ${coefPct} % = ${raw(fatherAfter)} ` +
+               `=> quantité attendue de la facture = ${raw(q1)} + ${raw(fatherAfter)}`;
+
+    const pStr=(price.value||"").trim(); const pNum=asNum(pStr);
+    if(pStr && Number.isFinite(pNum)){
+      const amount=(fatherTotal*pNum).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2});
+      line += ` soit ${raw(fatherTotal)} x ${pStr} = ${amount}€`;
+    }
+    bap.value=line;
+  }
+
+  // Ecouteurs (tout déclenche un redraw dynamique)
+  [fStart,fEnd,dStart,iStart,dAP,iAP,dEnd,iEnd,coef,price].forEach(el=>el.addEventListener('input', compute));
+
+  // Exemples
+  document.getElementById('exA').onclick=()=>{
+    fStart.value="2019-10-24"; fEnd.value="2020-10-23";
+    dStart.value="2019-10-24"; iStart.value="0";
+    dAP.value="2020-05-27";    iAP.value="1715";
+    dEnd.value="2020-10-23";   iEnd.value="3112";
+    coef.value="0.80"; price.value="0.10"; compute();
+  };
+  document.getElementById('exB').onclick=()=>{
+    fStart.value="2024-03-05"; fEnd.value="2025-03-05";
+    dStart.value="2024-03-05"; iStart.value="12000";
+    dAP.value="2024-08-20";    iAP.value="18450";
+    dEnd.value="2025-03-05";   iEnd.value="25380";
+    coef.value="0.70"; price.value=""; compute();
+  };
+
+  // Copier BAP
+  document.getElementById('copy').onclick=()=>{
+    bap.select(); document.execCommand('copy');
+    const btn=document.getElementById('copy'); btn.textContent="Copié ✓"; setTimeout(()=>btn.textContent="Copier le BAP",900);
+  };
+
+  // Init
+  document.getElementById('exA').click();
+</script>
+</body>
+</html>
