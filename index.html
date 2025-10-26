@@ -26,6 +26,7 @@
   .btn{background:#fff;border:1px solid var(--border);border-radius:12px;padding:9px 12px;font-size:16px;cursor:pointer}
   .btn.primary{background:var(--brand);color:#fff;border-color:transparent}
   .muted{color:var(--muted)}
+  .fine{font-size:14px;color:var(--muted)} /* NEW : petit texte sous segments */
   .chip{display:inline-flex;align-items:center;gap:8px;background:var(--chip);color:#3730a3;padding:6px 10px;border-radius:999px;font-weight:600}
   .chronique{margin-top:18px}
   .box{border:1px dashed var(--border);border-radius:12px;padding:14px}
@@ -34,10 +35,10 @@
   .tl-bar{height:8px;background:#e9e7ff;border-radius:999px;position:relative}
   .tl-marks{display:flex;justify-content:space-between;color:var(--muted);font-size:14px;margin-top:6px}
   /* Histogramme */
-  .histo{margin-top:8px;display:flex;flex-direction:column;gap:10px}
-  .seg{display:flex;align-items:center;gap:12px}
+  .histo{margin-top:8px;display:flex;flex-direction:column;gap:14px} /* plus d'air */
+  .seg{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
   .seg .name{width:180px;color:var(--muted)}
-  .bar{flex:1;display:flex;height:30px;border-radius:10px;overflow:hidden;border:1px solid var(--border)}
+  .bar{flex:1;display:flex;min-width:260px;height:30px;border-radius:10px;overflow:hidden;border:1px solid var(--border)}
   .b{height:100%}
   .f{background:var(--bar-father)} .s{background:var(--bar-son)} .g{background:var(--bar-grand)}
   .label{color:#fff;font-weight:700;font-size:15px;white-space:nowrap;padding:0 8px;line-height:30px}
@@ -192,6 +193,7 @@ const sep = n => Number(n).toLocaleString('fr-FR');
 const num = v => Number(String(v).replace(',','.').trim());
 const pct = x => (x*100).toFixed(0)+' %';
 const fmt = v => v?.trim?.()||'';
+const ptxt = x => (x*100).toFixed(0); // pour écrire 70 plutôt que 70.00 en formules
 
 function openTab(n){const t1=$('t1'),t2=$('t2'),s1=$('tab1'),s2=$('tab2');
   if(n===1){t1.setAttribute('aria-selected','true');t2.setAttribute('aria-selected','false');s1.hidden=false;s2.hidden=true;}
@@ -201,20 +203,13 @@ function openTab(n){const t1=$('t1'),t2=$('t2'),s1=$('tab1'),s2=$('tab2');
 /* -------- masque de date jj/mm/aaaa -------- */
 function maskDateInput(el){
   el.addEventListener('input', e=>{
-    let v=e.target.value.replace(/\D/g,'').slice(0,8); // que des chiffres
-    if(v.length>4) v=v.slice(0,4)+v.slice(4); // garde 8 chiffres
-    // jj/mm/aaaa
-    if(v.length>4) v=v.slice(0,4)+v.slice(4);
-    if(v.length>4) v=v.slice(0,4)+v.slice(4);
-    if(v.length>4) v=v.slice(0,4)+v.slice(4);
-    if(v.length>2) v = v.slice(0,2)+'/'+v.slice(2);
-    if(v.length>5) v = v.slice(0,5)+'/'+v.slice(5);
+    let v=e.target.value.replace(/\D/g,'').slice(0,8);  // chiffres seuls
+    if(v.length>2) v=v.slice(0,2)+'/'+v.slice(2);
+    if(v.length>5) v=v.slice(0,5)+'/'+v.slice(5);
     e.target.value=v;
   });
   el.addEventListener('keydown', e=>{
-    // autorise navigation / backspace
     if(['Backspace','Delete','ArrowLeft','ArrowRight','Tab','Home','End'].includes(e.key)) return;
-    // interdit autre que chiffre
     if(/\D/.test(e.key)) e.preventDefault();
   });
 }
@@ -258,15 +253,21 @@ function calc1(){
     const fatherAfter=Math.round(q2*k), sonAfter=q2-fatherAfter;
     const fatherTotal=q1+fatherAfter;
 
-    L.push(`<p><b>Calcul clair</b><br>Avant AP : <b>${sep(A)} − ${sep(S)} = ${sep(q1)} kWh</b> (100 % père).<br>
-            Après AP : <b>${sep(E)} − ${sep(A)} = ${sep(q2)} kWh</b> → père <b>${sep(fatherAfter)}</b> • fils <b>${sep(sonAfter)}</b>.</p>`);
+    /* Décomposition avec les formules explicites (NEW) */
+    L.push(`<p><b>Décomposition</b><br>
+      S1 (avant AP) : <b>${sep(A)} − ${sep(S)} = ${sep(q1)} kWh</b> (100 % père).<br>
+      S2 (après AP) : <b>${sep(E)} − ${sep(A)} = ${sep(q2)} kWh</b> → 
+      père : <b>${sep(q2)}</b> × <b>${ptxt(k)} %</b> = <b>${sep(fatherAfter)}</b> • 
+      fils : <b>${sep(q2)}</b> × <b>${ptxt(1-k)} %</b> = <b>${sep(sonAfter)}</b>.
+    </p>`);
+
     L.push(`<p><b>Part père attendue</b> : <b style="color:var(--ok)">${sep(fatherTotal)} kWh</b>.</p>`);
     L.push(`<p><b>Résumé</b><br>L’AP a lieu le <b>${da}</b> (index <b>${sep(A)}</b>). Après cette date, la production est ventilée à <b>${pct(k)}</b> pour le père et <b>${pct(1-k)}</b> pour le fils. La part facturable au père est de <b>${sep(fatherTotal)} kWh</b>.</p>`);
 
     const bap=`BAP : augmentation de puissance au ${da} avec un index de ${sep(A)} ; avant AP : ${sep(A)} - ${sep(S)} = ${sep(q1)} kWh ; après AP : ${sep(E)} - ${sep(A)} = ${sep(q2)} kWh × ${pct(k)} = ${sep(fatherAfter)} kWh ⇒ quantité attendue (père) = ${sep(q1)} + ${sep(fatherAfter)} = ${sep(fatherTotal)} kWh${Number.isFinite(price)?' = '+sep((fatherTotal*price).toFixed(2))+'€':''}`;
     $('bap1').value=bap;
 
-    renderViz1({FS,FE,da,q1,q2,k,fatherAfter,sonAfter});
+    renderViz1({FS,FE,ds,da,de,S,A,E,q1,q2,k,fatherAfter,sonAfter});
   }else{
     $('bap1').value=''; $('viz1').innerHTML='';
   }
@@ -283,17 +284,23 @@ function renderViz1(d){
     </div>`;
   }else{
     target.innerHTML=`<div class="histo">
-      <div class="seg"><div class="name">avant AP</div>
+      <div class="seg">
+        <div class="name">S1 (avant AP)</div>
         <div class="bar"><div class="b f" style="width:100%"><span class="label">père ${sep(d.q1)}</span></div></div>
         <div class="muted">${sep(d.q1)} kWh</div>
+        <div class="fine" style="width:100%">Période : <b>${d.FS}</b> → <b>${d.da}</b> • Index : <b>${sep(d.S)}</b> → <b>${sep(d.A)}</b></div> <!-- NEW -->
       </div>
-      <div class="seg"><div class="name">après AP</div>
+
+      <div class="seg">
+        <div class="name">S2 (après AP)</div>
         <div class="bar">
           <div class="b f" style="width:${d.k*100}%"><span class="label">père ${sep(d.fatherAfter)}</span></div>
           <div class="b s" style="width:${(1-d.k)*100}%"><span class="label">fils ${sep(d.sonAfter)}</span></div>
         </div>
         <div class="muted">${sep(d.q2)} kWh</div>
+        <div class="fine" style="width:100%">Période : <b>${d.da}</b> → <b>${d.FE}</b> • Index : <b>${sep(d.A)}</b> → <b>${sep(d.E)}</b></div> <!-- NEW -->
       </div>
+
       <div class="legend">
         <span class="dot" style="background:var(--bar-father)"></span>père
         <span class="dot" style="background:var(--bar-son)"></span>fils
@@ -335,11 +342,18 @@ function calc2(){
     const p3_f=Math.round(s3*k3f), p3_s=Math.round(s3*k3s), p3_g=s3-p3_f-p3_s;
     const fatherTotal=s1+p2_f+p3_f;
 
+    /* Décomposition détaillée avec pourcentages (NEW) */
     L.push(`<p><b>Décomposition</b><br>
-      S1 (avant AP1) : <b>${sep(s1)}</b> kWh au père.<br>
-      S2 (AP1 → AP2) : <b>${sep(s2)}</b> kWh → père <b>${sep(p2_f)}</b> / fils <b>${sep(p2_s)}</b>.<br>
-      S3 (après AP2) : <b>${sep(s3)}</b> kWh → père <b>${sep(p3_f)}</b> / fils <b>${sep(p3_s)}</b> / petit-fils <b>${sep(p3_g)}</b>.
+      S1 (avant AP1) : <b>${sep(A1)} − ${sep(S)} = ${sep(s1)} kWh</b> (100 % père).<br>
+      S2 (AP1 → AP2) : <b>${sep(A2)} − ${sep(A1)} = ${sep(s2)} kWh</b> → 
+      père : <b>${sep(s2)}</b> × <b>${ptxt(k12)} %</b> = <b>${sep(p2_f)}</b> • 
+      fils : <b>${sep(s2)}</b> × <b>${ptxt(1-k12)} %</b> = <b>${sep(p2_s)}</b>.<br>
+      S3 (après AP2) : <b>${sep(E)} − ${sep(A2)} = ${sep(s3)} kWh</b> → 
+      père : <b>${sep(s3)}</b> × <b>${ptxt(k3f)} %</b> = <b>${sep(p3_f)}</b> • 
+      fils : <b>${sep(s3)}</b> × <b>${ptxt(k3s)} %</b> = <b>${sep(p3_s)}</b> • 
+      petit-fils : <b>${sep(s3)}</b> × <b>${ptxt(k3g)} %</b> = <b>${sep(p3_g)}</b>.
     </p>`);
+
     L.push(`<p><b>Part père attendue</b> : <b style="color:var(--ok)">${sep(fatherTotal)} kWh</b>.</p>`);
     L.push(`<p><b>Résumé</b><br>AP1 le <b>${dA1}</b> (entrée fils) • AP2 le <b>${dA2}</b> (entrée petit-fils).
       Entre AP1 et AP2 : part père <b>${pct(k12)}</b>.
@@ -349,7 +363,7 @@ function calc2(){
     const bap=`BAP : AP1 au ${dA1} (index ${sep(A1)}) puis AP2 au ${dA2} (index ${sep(A2)}) ; avant AP1 : ${sep(A1)} - ${sep(S)} = ${sep(s1)} ; entre AP1 et AP2 : ${sep(A2)} - ${sep(A1)} = ${sep(s2)} × ${pct(k12)} = ${sep(p2_f)} ; après AP2 : ${sep(E)} - ${sep(A2)} = ${sep(s3)} ⇒ père ${sep(p3_f)}, fils ${sep(p3_s)}, petit-fils ${sep(p3_g)} ; quantité attendue (père) = ${sep(s1)} + ${sep(p2_f)} + ${sep(p3_f)} = ${sep(fatherTotal)} kWh.`;
     $('bap2').value=bap;
 
-    renderViz2({FS,FE,dA1,dA2,s1,s2,s3,p2_f,p2_s,p3_f,p3_s,p3_g});
+    renderViz2({FS,FE,dA1,dA2,de,S,A1,A2,E,s1,s2,s3,p2_f,p2_s,p3_f,p3_s,p3_g});
   }else{
     $('bap2').value=''; $('viz2').innerHTML='';
   }
@@ -366,25 +380,34 @@ function renderViz2(d){
     </div>`;
   }else{
     target.innerHTML=`<div class="histo">
-      <div class="seg"><div class="name">S1 (avant AP1)</div>
+      <div class="seg">
+        <div class="name">S1 (avant AP1)</div>
         <div class="bar"><div class="b f" style="width:100%"><span class="label">père ${sep(d.s1)}</span></div></div>
         <div class="muted">${sep(d.s1)} kWh</div>
+        <div class="fine" style="width:100%">Période : <b>${d.FS}</b> → <b>${d.dA1}</b> • Index : <b>${sep(d.S)}</b> → <b>${sep(d.A1)}</b></div> <!-- NEW -->
       </div>
-      <div class="seg"><div class="name">S2 (AP1 → AP2)</div>
+
+      <div class="seg">
+        <div class="name">S2 (AP1 → AP2)</div>
         <div class="bar">
           <div class="b f" style="width:${(d.p2_f/d.s2)*100}%"><span class="label">père ${sep(d.p2_f)}</span></div>
           <div class="b s" style="width:${(d.p2_s/d.s2)*100}%"><span class="label">fils ${sep(d.p2_s)}</span></div>
         </div>
         <div class="muted">${sep(d.s2)} kWh</div>
+        <div class="fine" style="width:100%">Période : <b>${d.dA1}</b> → <b>${d.dA2}</b> • Index : <b>${sep(d.A1)}</b> → <b>${sep(d.A2)}</b></div> <!-- NEW -->
       </div>
-      <div class="seg"><div class="name">S3 (après AP2)</div>
+
+      <div class="seg">
+        <div class="name">S3 (après AP2)</div>
         <div class="bar">
           <div class="b f" style="width:${(d.p3_f/d.s3)*100}%"><span class="label">père ${sep(d.p3_f)}</span></div>
           <div class="b s" style="width:${(d.p3_s/d.s3)*100}%"><span class="label">fils ${sep(d.p3_s)}</span></div>
           <div class="b g" style="width:${(d.p3_g/d.s3)*100}%"><span class="label">petit-fils ${sep(d.p3_g)}</span></div>
         </div>
         <div class="muted">${sep(d.s3)} kWh</div>
+        <div class="fine" style="width:100%">Période : <b>${d.dA2}</b> → <b>${d.FE}</b> • Index : <b>${sep(d.A2)}</b> → <b>${sep(d.E)}</b></div> <!-- NEW -->
       </div>
+
       <div class="legend">
         <span class="dot" style="background:var(--bar-father)"></span>père
         <span class="dot" style="background:var(--bar-son)"></span>fils
@@ -394,7 +417,7 @@ function renderViz2(d){
   }
 }
 
-/* -------- init : on pré-charge un exemple sur chaque onglet -------- */
+/* -------- init -------- */
 loadExample1(); loadExample2();
 </script>
 </body>
