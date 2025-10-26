@@ -229,7 +229,7 @@ function guessPeriodLabel(a,b){
   return `période de ${d} jours`;
 }
 
-/* Timeline (responsive, robuste) */
+/* Timeline */
 function drawTimeline(host, marks){
   host.innerHTML="";
   const svgNS="http://www.w3.org/2000/svg";
@@ -446,14 +446,13 @@ function renderChroniqueLive2(v){
   chrono2.innerHTML=L.join("");
 }
 
-/* === Histogramme avec légendes sous chaque segment === */
+/* === Histogramme avec légendes sous chaque segment — marge gauche élargie === */
 function drawStackedPF2(host, data){
   const {q1,q2,q3,p1,c1,p2,c2,g2, ds, da1, da2, de} = data;
 
   host.innerHTML="";
   const svgNS="http://www.w3.org/2000/svg";
   const svg=document.createElementNS(svgNS,"svg");
-  // hauteur augmentée pour casquettes sous barres
   svg.setAttribute("viewBox","0 0 1100 300");
   svg.setAttribute("preserveAspectRatio","xMidYMid meet");
   host.appendChild(svg);
@@ -463,11 +462,12 @@ function drawStackedPF2(host, data){
   function safe(n){return Number.isFinite(n)?n:0}
 
   function barRow(y, segments, title, qty, caption){
-    const left=60, right=1040, width=right-left, height=28, radius=6;
+    // ⬇⬇ marge gauche portée à 160px pour éviter la coupe des titres
+    const left=160, right=1060, width=right-left, height=28, radius=6;
     const sumW=segments.reduce((s,s1)=>s+safe(s1.w),0)||1;
     let x=left;
 
-    label(`${title}`, left-10, y+20, "end", 13);
+    label(`${title}`, left-12, y+20, "end", 13);
     label(`${safe(qty)} kWh`, right+10, y+20, "start", 13);
 
     segments.forEach(s=>{
@@ -478,11 +478,11 @@ function drawStackedPF2(host, data){
       x += w + 1;
     });
 
-    // légende sous la barre
     label(caption, left, y+46, "start", 12);
   }
 
-  label("Histogramme par segment (ventilation des kWh)", 60, 26, "start", 14);
+  // Titre aligné sur la nouvelle marge
+  label("Histogramme par segment (ventilation des kWh)", 160, 26, "start", 14);
 
   const capS1 = `S1 (avant AP1) : du ${fmtDate(ds)} au ${fmtDate(da1)} → ${safe(q1)} kWh, 100 % père.`;
   const capS2 = `S2 (AP1 → AP2) : du ${fmtDate(da1)} au ${fmtDate(da2)} → ${safe(q2)} kWh dont ${safe(p1)} père & ${safe(c1)} fils.`;
@@ -493,7 +493,7 @@ function drawStackedPF2(host, data){
   barRow(200, [{w:p2, color:"var(--col-pere)", text:`père ${safe(p2)}`},{w:c2, color:"var(--col-fils)", text:`fils ${safe(c2)}`},{w:g2, color:"var(--col-petit)", text:`petit-fils ${safe(g2)}`}], "S3 (après AP2)", q3, capS3);
 
   const tot = safe(q1)+safe(q2)+safe(q3);
-  label(`Total période : ${tot} kWh`, 60, 270, "start", 13);
+  label(`Total période : ${tot} kWh`, 160, 270, "start", 13);
 }
 
 function compute2(){
@@ -535,7 +535,7 @@ function compute2(){
     {d:(da2&&de)?new Date((+new Date(da2)+(+new Date(de)))/2):null,lbl:(coefsOK2?`S3 : ${pctText(k2p)} % père`:"S3")}
   ]);
 
-  // ⬇️ on passe aussi les dates pour les légendes sous barres
+  // On passe aussi les dates pour les légendes sous barres
   drawStackedPF2(bars2, { q1,q2,q3,p1,c1,p2,c2,g2, ds, da1, da2, de });
 
   if (ready){
