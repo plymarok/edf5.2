@@ -39,14 +39,23 @@
   textarea{width:100%;min-height:120px;resize:vertical;border-radius:10px;border:1px solid var(--border);padding:10px}
   svg.timeline{width:100%;height:210px}
   .small{font-size:13px}
+
+  /* Zone droite = Chronique en live */
+  .chroniqueLive{
+    min-height:260px;border:1px solid var(--border);border-radius:12px;
+    padding:14px;background:var(--panel);
+  }
+  .chroniqueLive h4{margin:6px 0 8px}
+  .chroniqueLive p{margin:6px 0}
+  .chip{display:inline-block;background:var(--accent-weak);padding:2px 8px;border-radius:999px}
 </style>
 </head>
 <body>
 <header class="topbar">
   <h1>Calcul normé pour augmentation de puissance — père & fils</h1>
   <div class="actions">
-    <button id="exA" class="btn">Exemple (80%)</button>
-    <button id="exB" class="btn">Exemple (70%)</button>
+    <button id="exA" class="btn">Exemple (70 % père)</button>
+    <button id="exB" class="btn">Exemple (80 % père)</button>
     <button id="clear" class="btn">Vider le formulaire</button>
     <button id="theme" class="btn ghost">🌙/☀️</button>
   </div>
@@ -56,6 +65,7 @@
   <section class="panel">
     <h3>1) Renseigne le cas</h3>
     <div class="grid">
+      <!-- Colonne gauche : formulaire -->
       <div>
         <h4>Période de facturation (facture à traiter)</h4>
         <div class="row"><label>Début de période</label><input id="fStart" type="date" class="control"></div>
@@ -82,7 +92,7 @@
         <div class="row">
           <label>Coef père après AP</label>
           <div style="display:flex;gap:8px;align-items:center">
-            <input id="coef" type="number" step="0.01" min="0" max="1" class="control" placeholder="0.80 = 80 %">
+            <input id="coef" type="number" step="0.01" min="0" max="1" class="control" placeholder="0.70 = 70 %">
           </div>
         </div>
         <div class="help">Part de production affectée au père <b>après AP</b>. <span id="coefHints" class="mono"></span></div>
@@ -93,15 +103,10 @@
         <div class="note">La phrase « soit … € » s’ajoute uniquement si le prix est renseigné.</div>
       </div>
 
+      <!-- Colonne droite : Chronique live -->
       <div>
-        <h4>Quantités calculées</h4>
-        <div class="mono">
-          <div>Q<sub>avant</sub> = <span id="q1">—</span> kWh <span class="muted">— 100 % au père (avant AP)</span></div>
-          <div>Q<sub>après</sub> = <span id="q2">—</span> kWh</div>
-          <div>Part <b>père</b> après = <span id="afterFather">—</span> kWh • Part <b>fils</b> après = <span id="afterChild">—</span> kWh</div>
-          <div><b>Total père attendu</b> = <span id="fatherTotal">—</span> kWh</div>
-          <div id="checks" class="small muted" style="margin-top:6px"></div>
-        </div>
+        <h4>Chronique (résumé en temps réel)</h4>
+        <div id="chroniqueLive" class="chroniqueLive"></div>
       </div>
     </div>
 
@@ -110,12 +115,7 @@
   </section>
 
   <section class="panel">
-    <h3>2) Chronique (explications pas à pas)</h3>
-    <div id="chronique" class="chronique"></div>
-  </section>
-
-  <section class="panel">
-    <h3>3) BAP — Commentaire normé (copier/coller)</h3>
+    <h3>2) BAP — Commentaire normé (copier/coller)</h3>
     <textarea id="bap" class="mono" readonly></textarea>
     <div style="display:flex;gap:10px;margin-top:8px">
       <button id="copy" class="btn primary">Copier le BAP</button>
@@ -143,11 +143,8 @@
   const coef=document.getElementById('coef'), price=document.getElementById('price');
   const coefHints=document.getElementById('coefHints');
 
-  const q1El=document.getElementById('q1'), q2El=document.getElementById('q2');
-  const afterFatherEl=document.getElementById('afterFather'), afterChildEl=document.getElementById('afterChild');
-  const fatherTotalEl=document.getElementById('fatherTotal'), checks=document.getElementById('checks');
   const timelineHost=document.getElementById('timeline'), bap=document.getElementById('bap');
-  const chronique=document.getElementById('chronique');
+  const chroniqueLive=document.getElementById('chroniqueLive');
 
   // Utils
   const i18n = n => Number(n).toLocaleString("fr-FR");
@@ -238,60 +235,42 @@
     }
   }
 
-  // CHRONIQUE détaillée
-  function renderChronique(values){
+  // CHRONIQUE (texte live à droite)
+  function renderChroniqueLive(values){
     const {
       FS, FE, ds, S, da, A, de, E, k,
       q1, q2, fatherAfter, childAfter, fatherTotal,
-      validOrder, ok1, ok2
+      validOrder, ok1, ok2, ready
     } = values;
 
-    const parts=[];
+    const P = [];
     if(FS && FE){
-      parts.push(`<h4>Cadre de la facture</h4>`);
-      parts.push(`<p>La facture que tu traites couvre la <span style="background:var(--accent-weak);padding:2px 8px;border-radius:999px"> ${guessPeriodLabel(FS,FE)} </span>, du <b>${fmt(FS)}</b> au <b>${fmt(FE)}</b>.</p>`);
+      P.push(`<h4>Cadre</h4><p>Facture sur <span class="chip">${guessPeriodLabel(FS,FE)}</span> : <b>${fmt(FS)}</b> → <b>${fmt(FE)}</b>.</p>`);
     } else {
-      parts.push(`<h4>Cadre de la facture</h4><p class="muted">Renseigne le début et la fin : je reconnaîtrai s’il s’agit d’une période semestrielle ou annuelle.</p>`);
+      P.push(`<h4>Cadre</h4><p class="muted">Renseigne le début & la fin de la période.</p>`);
     }
 
-    parts.push(`<h4>Repères d’index</h4>`);
-    if(ds){ parts.push(`<p>Point de départ (fin N-1) : <b>${fmt(ds)}</b>${Number.isFinite(S)?` — index <b>${raw(S)}</b>`:""}.</p>`); }
-    if(da){ parts.push(`<p>Augmentation de puissance le <b>${fmt(da)}</b>${Number.isFinite(A)?` — index <b>${raw(A)}</b>`:""}. À partir de ce jour, la production se ventile entre père et fils.</p>`); }
-    if(de){ parts.push(`<p>Arrêt de la 1ʳᵉ facture post-AP à la date anniversaire : <b>${fmt(de)}</b>${Number.isFinite(E)?` — index <b>${raw(E)}</b>`:""}.</p>`); }
-    if(!ds && !da && !de){ parts.push(`<p class="muted">Renseigne les trois jalons : fin N-1 → AP → anniversaire.</p>`); }
-
-    if(ds && da){
-      parts.push(`<h4>Découpage de la production</h4>`);
-      parts.push(`<p>Avant AP : du <b>${fmt(ds)}</b> au <b>${fmt(da)}</b> → <b>100 %</b> au <b>père</b>.</p>`);
-      if(de){
-        if(Number.isFinite(k)){
-          const filsPct = pctText(1-k);
-          parts.push(`<p>Après AP : du <b>${fmt(da)}</b> au <b>${fmt(de)}</b> → <b>${pctText(k)} %</b> au père et <b>${filsPct}</b> au fils.</p>`);
-        } else {
-          parts.push(`<p>Après AP : du <b>${fmt(da)}</b> au <b>${fmt(de)}</b> → renseigne le <b>coef père</b> pour ventiler.</p>`);
-        }
-      }
+    P.push(`<h4>Repères</h4>`);
+    P.push(`<p>${ds?`Fin N-1 : <b>${fmt(ds)}</b>${Number.isFinite(S)?` — ${raw(S)}`:""}`:`<span class="muted">Fin N-1 ?</span>`}</p>`);
+    P.push(`<p>${da?`AP : <b>${fmt(da)}</b>${Number.isFinite(A)?` — ${raw(A)}`:""}`:`<span class="muted">Date d’AP ?</span>`}</p>`);
+    P.push(`<p>${de?`Anniv. : <b>${fmt(de)}</b>${Number.isFinite(E)?` — ${raw(E)}`:""}`:`<span class="muted">Date anniversaire ?</span>`}</p>`);
+    if(k>=0 && k<=1){
+      P.push(`<p>Ventilation après AP : père <b>${pctText(k)} %</b> • fils <b>${pctText(1-k)} %</b>.</p>`);
+    }else{
+      P.push(`<p class="muted">Coef père après AP à renseigner (0 ↔ 1).</p>`);
     }
 
-    if(Number.isFinite(S) && Number.isFinite(A) && Number.isFinite(E) && (k>=0 && k<=1) && validOrder){
-      parts.push(`<h4>Quantités attendues</h4>`);
-      parts.push(`<p>Avant AP : <b>${raw(A)} − ${raw(S)} = ${raw(q1)} kWh</b> (père 100 %).<br>
-      Après AP : <b>${raw(E)} − ${raw(A)} = ${raw(q2)} kWh</b> → père <b>${raw(fatherAfter)} kWh</b>, fils <b>${raw(childAfter)} kWh</b>.<br>
-      Total père attendu : <b>${raw(fatherTotal)} kWh</b>.</p>`);
-
-      parts.push(`<h4>Auto-contrôles</h4>`);
-      parts.push(`<p>${ok1?`✅`:`❌`} père après + fils après = Q_après • ${ok2?`✅`:`❌`} Q_avant + Q_après = Δindex.</p>`);
+    if(ready){
+      P.push(`<h4>Découpage & quantités</h4>
+        <p>Avant AP : <b>${raw(q1)} kWh</b> (père 100 %).</p>
+        <p>Après AP : <b>${raw(q2)} kWh</b> → père <b>${raw(fatherAfter)} kWh</b> • fils <b>${raw(childAfter)} kWh</b>.</p>
+        <p><b>Total père attendu :</b> <b>${raw(fatherTotal)} kWh</b>.</p>
+        <p>${ok1?'✅':'❌'} père après + fils après = Q_après • ${ok2?'✅':'❌'} Q_avant + Q_après = Δindex.</p>`);
+    }else if(ds && da && de && !validOrder){
+      P.push(`<p class="ko">⚠ Ordre incohérent : <b>fin N-1 ≤ AP ≤ anniversaire</b> et index croissants requis.</p>`);
     }
 
-    if(ds && da && de && (!validOrder || !Number.isFinite(S) || !Number.isFinite(A) || !Number.isFinite(E))){
-      parts.push(`<h4>À corriger</h4>`);
-      if(!validOrder) parts.push(`<p>• Vérifie l’ordre temporel : <b>fin N-1 ≤ AP ≤ anniversaire</b> et les <b>index croissants</b>.</p>`);
-      if(!Number.isFinite(S)) parts.push(`<p>• Saisir l’index de <b>fin N-1</b>.</p>`);
-      if(!Number.isFinite(A)) parts.push(`<p>• Saisir l’<b>index le jour d’AP</b> (tolérance J±1).</p>`);
-      if(!Number.isFinite(E)) parts.push(`<p>• Saisir l’<b>index à l’anniversaire</b>.</p>`);
-      if(!(k>=0 && k<=1)) parts.push(`<p>• Saisir le <b>coef père</b> (0 → 1).</p>`);
-    }
-    chronique.innerHTML = parts.join("");
+    chroniqueLive.innerHTML = P.join("");
   }
 
   // CALCULS + BAP
@@ -316,17 +295,6 @@
       fatherTotal=q1+fatherAfter;
       ok1=(fatherAfter+childAfter===q2);
       ok2=((E-S)===(q1+q2));
-
-      q1El.textContent=i18n(q1);
-      q2El.textContent=i18n(q2);
-      afterFatherEl.textContent=i18n(fatherAfter);
-      afterChildEl.textContent=i18n(childAfter);
-      fatherTotalEl.textContent=i18n(fatherTotal);
-
-      checks.innerHTML=`${ok1?"<span class='ok'>✅</span>":"<span class='ko'>❌</span>"} père après + fils après = Q_après • ${ok2?"<span class='ok'>✅</span>":"<span class='ko'>❌</span>"} Q_avant + Q_après = Δindex`;
-    }else{
-      q1El.textContent=q2El.textContent=afterFatherEl.textContent=afterChildEl.textContent=fatherTotalEl.textContent="—";
-      checks.textContent="Complète la période, les 3 jalons (dates + index) et le coef père pour calculer.";
     }
 
     // BAP normé
@@ -346,9 +314,8 @@
       bap.value="";
     }
 
-    // Chronique
-    const pack={FS,FE,ds,S,da,A,de,E,k,q1,q2,fatherAfter,childAfter,fatherTotal,validOrder,ok1,ok2};
-    renderChronique(pack);
+    // Chronique live (colonne droite)
+    renderChroniqueLive({FS,FE,ds,S,da,A,de,E,k,q1,q2,fatherAfter,childAfter,fatherTotal,validOrder,ok1,ok2,ready});
   }
 
   // Écouteurs
@@ -373,10 +340,7 @@
   // Vider
   document.getElementById('clear').onclick=()=>{
     [fStart,fEnd,dStart,iStart,dAP,iAP,dEnd,iEnd,coef,price].forEach(el=>el.value="");
-    coefHints.textContent="";
-    q1El.textContent=q2El.textContent=afterFatherEl.textContent=afterChildEl.textContent=fatherTotalEl.textContent="—";
-    checks.textContent="Saisis la période, les 3 jalons et le coef père : le calcul et le BAP apparaissent.";
-    bap.value=""; drawTimeline(); chronique.innerHTML="";
+    coefHints.textContent=""; bap.value=""; drawTimeline(); chroniqueLive.innerHTML="";
   };
 
   // Copier BAP
