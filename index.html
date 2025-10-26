@@ -39,15 +39,6 @@
   textarea{width:100%;min-height:120px;resize:vertical;border-radius:10px;border:1px solid var(--border);padding:10px}
   svg.timeline{width:100%;height:210px}
   .small{font-size:13px}
-
-  /* Zone blanche de commentaires (à droite) */
-  .commentbox{
-    min-height:150px; border:1px dashed var(--border); border-radius:12px;
-    padding:12px; background:var(--panel);
-  }
-  .commentbox h4{margin:4px 0 6px; font-size:14px}
-  .commentbox p{margin:6px 0; font-size:14px}
-  .commentbox .muted{font-size:13px}
 </style>
 </head>
 <body>
@@ -111,9 +102,6 @@
           <div><b>Total père attendu</b> = <span id="fatherTotal">—</span> kWh</div>
           <div id="checks" class="small muted" style="margin-top:6px"></div>
         </div>
-
-        <!-- ❗ ICI : Zone blanche des commentaires dynamiques -->
-        <div id="commentBox" class="commentbox" style="margin-top:12px"></div>
       </div>
     </div>
 
@@ -159,7 +147,7 @@
   const afterFatherEl=document.getElementById('afterFather'), afterChildEl=document.getElementById('afterChild');
   const fatherTotalEl=document.getElementById('fatherTotal'), checks=document.getElementById('checks');
   const timelineHost=document.getElementById('timeline'), bap=document.getElementById('bap');
-  const chronique=document.getElementById('chronique'), commentBox=document.getElementById('commentBox');
+  const chronique=document.getElementById('chronique');
 
   // Utils
   const i18n = n => Number(n).toLocaleString("fr-FR");
@@ -250,41 +238,6 @@
     }
   }
 
-  // COMMENTBOX (résumé littéraire court)
-  function renderCommentBox(values){
-    const {FS,FE,ds,S,da,A,de,E,k,q1,q2,fatherAfter,childAfter,fatherTotal,validOrder,ok1,ok2,ready} = values;
-    const out=[];
-    // Période
-    if(FS && FE){
-      out.push(`<h4>Période</h4><p>${guessPeriodLabel(FS,FE)} : <b>${fmt(FS)}</b> → <b>${fmt(FE)}</b>.</p>`);
-    }else{
-      out.push(`<h4>Période</h4><p class="muted">Indique le début et la fin de la facture.</p>`);
-    }
-    // Jalons
-    out.push(`<h4>Repères</h4>`);
-    out.push(`<p>${ds?`Fin N-1 : <b>${fmt(ds)}</b>${Number.isFinite(S)?` — ${raw(S)}`:""}.`:`<span class="muted">Fin N-1 manquante.</span>`}</p>`);
-    out.push(`<p>${da?`AP : <b>${fmt(da)}</b>${Number.isFinite(A)?` — ${raw(A)}`:""}.`:`<span class="muted">Date d’AP manquante.</span>`}</p>`);
-    out.push(`<p>${de?`Anniversaire : <b>${fmt(de)}</b>${Number.isFinite(E)?` — ${raw(E)}`:""}.`:`<span class="muted">Anniversaire manquant.</span>`}</p>`);
-
-    // Coef & découpage
-    if(k>=0 && k<=1){
-      out.push(`<p>Ventilation après AP : père <b>${pctText(k)} %</b> • fils <b>${pctText(1-k)} %</b>.</p>`);
-    }else{
-      out.push(`<p class="muted">Renseigne le coef père après AP (0 ↔ 1).</p>`);
-    }
-
-    // Résumé calculé
-    if(ready){
-      out.push(`<h4>Découpage & quantités</h4>
-        <p>Avant AP : <b>${raw(q1)} kWh</b> (père 100 %). Après AP : <b>${raw(q2)} kWh</b> → père <b>${raw(fatherAfter)} kWh</b>, fils <b>${raw(childAfter)} kWh</b>.</p>
-        <p><b>Total père attendu :</b> <b>${raw(fatherTotal)} kWh</b>.</p>
-        <p>${ok1?'✅':'❌'} père après + fils après = Q_après • ${ok2?'✅':'❌'} Q_avant + Q_après = Δindex.</p>`);
-    }else if(ds && da && de){
-      if(!validOrder) out.push(`<p class="ko">⚠ Ordre incohérent : vérifie <b>fin N-1 ≤ AP ≤ anniversaire</b> et les index croissants.</p>`);
-    }
-    commentBox.innerHTML = out.join("");
-  }
-
   // CHRONIQUE détaillée
   function renderChronique(values){
     const {
@@ -296,7 +249,7 @@
     const parts=[];
     if(FS && FE){
       parts.push(`<h4>Cadre de la facture</h4>`);
-      parts.push(`<p>La facture que tu traites couvre la <span class="pill" style="background:var(--accent-weak)">${guessPeriodLabel(FS,FE)}</span>, du <b>${fmt(FS)}</b> au <b>${fmt(FE)}</b>.</p>`);
+      parts.push(`<p>La facture que tu traites couvre la <span style="background:var(--accent-weak);padding:2px 8px;border-radius:999px"> ${guessPeriodLabel(FS,FE)} </span>, du <b>${fmt(FS)}</b> au <b>${fmt(FE)}</b>.</p>`);
     } else {
       parts.push(`<h4>Cadre de la facture</h4><p class="muted">Renseigne le début et la fin : je reconnaîtrai s’il s’agit d’une période semestrielle ou annuelle.</p>`);
     }
@@ -393,9 +346,8 @@
       bap.value="";
     }
 
-    // Zone blanche (résumé court) + chronique détaillée
-    const pack={FS,FE,ds,S,da,A,de,E,k,q1,q2,fatherAfter,childAfter,fatherTotal,validOrder,ok1,ok2,ready};
-    renderCommentBox(pack);
+    // Chronique
+    const pack={FS,FE,ds,S,da,A,de,E,k,q1,q2,fatherAfter,childAfter,fatherTotal,validOrder,ok1,ok2};
     renderChronique(pack);
   }
 
@@ -424,7 +376,7 @@
     coefHints.textContent="";
     q1El.textContent=q2El.textContent=afterFatherEl.textContent=afterChildEl.textContent=fatherTotalEl.textContent="—";
     checks.textContent="Saisis la période, les 3 jalons et le coef père : le calcul et le BAP apparaissent.";
-    bap.value=""; drawTimeline(); renderCommentBox({}); chronique.innerHTML="";
+    bap.value=""; drawTimeline(); chronique.innerHTML="";
   };
 
   // Copier BAP
