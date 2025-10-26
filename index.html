@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AP — Générateur de BAP normé & Ligne de vie</title>
+  <title>AP — BAP normé, Ligne de vie & Période de facturation</title>
   <meta name="color-scheme" content="light dark" />
   <style>
     :root{
@@ -32,19 +32,20 @@
     .container{max-width:1100px; margin:18px auto; padding:0 18px; display:grid; gap:18px}
     .panel{background:var(--panel); border:1px solid var(--border); border-radius:14px; padding:16px 16px 20px; box-shadow:var(--shadow)}
     .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px}
-    .row{display:grid; grid-template-columns:190px 1fr; gap:10px; align-items:center; margin:8px 0}
+    .row{display:grid; grid-template-columns:210px 1fr; gap:10px; align-items:center; margin:8px 0}
     .muted{color:var(--muted)}
-    .narrative{line-height:1.6}
-    .pill{padding:6px 10px; border-radius:999px; background:var(--accent-weak)}
     .mono{font-variant-numeric:tabular-nums}
+    .pill{padding:6px 10px; border-radius:999px; background:var(--accent-weak)}
     textarea{width:100%; min-height:120px; resize:vertical; border-radius:10px; border:1px solid var(--border); padding:10px}
     svg.timeline{width:100%; height:190px}
     .small{font-size:13px}
+    .note{margin-top:6px; font-size:13px}
+    .warn{color:var(--warn)}
   </style>
 </head>
 <body>
   <header class="topbar">
-    <h1>Augmentation de puissance — BAP normé & Ligne de vie</h1>
+    <h1>Augmentation de puissance — BAP normé, Ligne de vie & Période</h1>
     <div class="actions">
       <button id="exA" class="btn">Charger exemple (80%)</button>
       <button id="exB" class="btn">Charger exemple (70%)</button>
@@ -57,12 +58,18 @@
       <h3>1) Renseigne le cas</h3>
       <div class="grid">
         <div>
+          <h4>Période de facturation (la facture que tu traites)</h4>
+          <div class="row"><label>Début de période</label><input id="fStart" type="date" class="control"></div>
+          <div class="row"><label>Fin de période</label><input id="fEnd" type="date" class="control"></div>
+
+          <h4 style="margin-top:10px">Trois jalons d’index</h4>
           <div class="row"><label>Fin de facture N-1</label><input id="dStart" type="date" class="control"></div>
           <div class="row"><label>Index à cette date</label><input id="iStart" type="number" step="1" class="control" placeholder="ex. 0"></div>
           <div class="row"><label>Date d’AP</label><input id="dAP" type="date" class="control"></div>
           <div class="row"><label>Index le jour d’AP</label><input id="iAP" type="number" step="1" class="control" placeholder="ex. 1715"></div>
           <div class="row"><label>Date anniversaire</label><input id="dEnd" type="date" class="control"></div>
           <div class="row"><label>Index à l’anniversaire</label><input id="iEnd" type="number" step="1" class="control" placeholder="ex. 3112"></div>
+
           <div class="row"><label>Coef père après AP</label>
             <div style="display:flex; gap:8px; align-items:center">
               <input id="coef" type="number" step="0.01" min="0" max="1" class="control" placeholder="0.80 = 80 %">
@@ -72,6 +79,7 @@
           <div class="row"><label>Prix (€/kWh) <span class="muted small">(facultatif)</span></label>
             <input id="price" type="text" class="control" placeholder="0.10">
           </div>
+          <div class="note muted">Tolérance index d’AP : <b>J ± 1</b> • Le fils prend <i>1 − coef père</i> après AP.</div>
         </div>
 
         <div>
@@ -82,7 +90,9 @@
             <div>Part père après = <span id="afterFather">—</span> kWh • Part fils après = <span id="afterChild">—</span> kWh</div>
             <div><b>Total père attendu</b> = <span id="fatherTotal">—</span> kWh</div>
             <div id="checks" class="small muted" style="margin-top:4px"></div>
+            <div id="periodWarn" class="small warn"></div>
           </div>
+
           <div id="badges" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px"></div>
         </div>
       </div>
@@ -112,6 +122,9 @@
     })();
 
     // Sélecteurs
+    const fStart = document.getElementById('fStart');
+    const fEnd   = document.getElementById('fEnd');
+
     const dStart = document.getElementById('dStart');
     const iStart = document.getElementById('iStart');
     const dAP    = document.getElementById('dAP');
@@ -125,153 +138,4 @@
     const q2El = document.getElementById('q2');
     const afterFatherEl = document.getElementById('afterFather');
     const afterChildEl  = document.getElementById('afterChild');
-    const fatherTotalEl = document.getElementById('fatherTotal');
-    const checks = document.getElementById('checks');
-    const badges = document.getElementById('badges');
-    const timelineHost = document.getElementById('timeline');
-    const bap = document.getElementById('bap');
-
-    const i18n = n => Number(n).toLocaleString("fr-FR"); // pour affichage classiques
-    const raw  = n => String(n);                          // pour la norme (sans espace 2 833 -> 2833)
-    const pct  = x => (x*100).toLocaleString("fr-FR",{maximumFractionDigits:2}).replace(/\u00a0/g," ")+" %";
-    const fmtDate = s => new Date(s+"T00:00:00").toLocaleDateString("fr-FR");
-
-    const asNum = v => (v===""||v==null)? NaN : Number(String(v).replace(",","."));
-
-    function validDates(ds, da, de){
-      const s = new Date(ds+"T00:00:00"), a = new Date(da+"T00:00:00"), e = new Date(de+"T00:00:00");
-      return s<=a && a<=e;
-    }
-
-    function computeAndRender(){
-      const S = asNum(iStart.value), A = asNum(iAP.value), E = asNum(iEnd.value);
-      const ds = dStart.value, da = dAP.value, de = dEnd.value;
-      const k  = asNum(coef.value);
-
-      badges.innerHTML = "";
-      let ok = true, msgs = [];
-
-      if(!(ds && da && de) || !validDates(ds,da,de)){ ok=false; msgs.push("Ordre des dates invalide (fin N-1 ≤ AP ≤ anniversaire)."); }
-      if(!Number.isFinite(S) || !Number.isFinite(A) || !Number.isFinite(E)){ ok=false; msgs.push("Indices manquants ou non numériques."); }
-      if(Number.isFinite(S) && Number.isFinite(A) && S>A){ ok=false; msgs.push("Index d’AP inférieur à l’index de départ."); }
-      if(Number.isFinite(A) && Number.isFinite(E) && A>E){ ok=false; msgs.push("Index de fin inférieur à l’index d’AP."); }
-      if(!(k>=0 && k<=1)){ ok=false; msgs.push("Coefficient père hors plage [0 ; 1]."); }
-
-      if(!ok){
-        q1El.textContent=q2El.textContent=afterFatherEl.textContent=afterChildEl.textContent=fatherTotalEl.textContent="—";
-        checks.textContent = "KO : " + msgs.join(" ");
-        timelineHost.innerHTML=""; bap.value="";
-        return;
-      }
-
-      const q1 = A - S;
-      const q2 = E - A;
-      const fatherAfter = Math.round(q2 * k);
-      const childAfter  = q2 - fatherAfter;
-      const fatherTotal = q1 + fatherAfter;
-
-      q1El.textContent = i18n(q1);
-      q2El.textContent = i18n(q2);
-      afterFatherEl.textContent = i18n(fatherAfter);
-      afterChildEl.textContent  = i18n(childAfter);
-      fatherTotalEl.textContent = i18n(fatherTotal);
-
-      const ctl1 = (fatherAfter + childAfter === q2);
-      const ctl2 = ((E - S) === (q1 + q2));
-      checks.innerHTML = `${ctl1?"✅":"❌"} (père après + fils après) = Q<sub>après</sub> • ${ctl2?"✅":"❌"} Q<sub>avant</sub> + Q<sub>après</sub> = Δindex`;
-
-      // Badges
-      const pill = t=>`<span class="pill">${t}</span>`;
-      badges.innerHTML = [
-        pill(`<b>Fin N-1</b> : ${fmtDate(ds)} — ${i18n(S)}`),
-        pill(`<b>AP</b> : ${fmtDate(da)} — ${i18n(A)}`),
-        pill(`<b>Anniversaire</b> : ${fmtDate(de)} — ${i18n(E)}`),
-        pill(`<b>Coef père</b> : ${pct(k)}`)
-      ].join("");
-
-      drawTimeline({ds,da,de,S,A,E,k});
-
-      // ===== BAP normé (exactement le style demandé)
-      const coefPctStr = (k*100).toLocaleString("fr-FR",{maximumFractionDigits:2}).replace(/\u00a0/g," ");
-      let line = `BAP : augmentation de puissance au ${fmtDate(da)} avec un index de ${raw(A)} ` +
-                 `soit avant augmentation de puissance : ${raw(A)} - ${raw(S)} = ${raw(q1)} ` +
-                 `+ après augmentation de puissance : ${raw(E)} - ${raw(A)} = ${raw(q2)} x ${coefPctStr} % = ${raw(fatherAfter)} ` +
-                 `=> quantité attendue de la facture = ${raw(q1)} + ${raw(fatherAfter)}`;
-
-      const pStr = price.value.trim();
-      if(pStr){
-        const pNum = asNum(pStr);
-        if(Number.isFinite(pNum)){
-          const amount = (fatherTotal * pNum).toLocaleString("fr-FR",{minimumFractionDigits:2, maximumFractionDigits:2});
-          line += ` soit ${raw(fatherTotal)} x ${pStr} = ${amount}€`;
-        }
-      }
-      bap.value = line;
-    }
-
-    function drawTimeline(e){
-      timelineHost.innerHTML = "";
-      const svgNS="http://www.w3.org/2000/svg";
-      const svg=document.createElementNS(svgNS,"svg");
-      svg.setAttribute("class","timeline");
-      svg.setAttribute("viewBox","0 0 1100 190");
-      svg.setAttribute("preserveAspectRatio","xMidYMid meet");
-      timelineHost.appendChild(svg);
-
-      const start=new Date(e.ds), ap=new Date(e.da), end=new Date(e.de);
-      const X=d=>40+((d-start)/(end-start))*1020;
-
-      line(X(start),85,X(end),85,6,"#2a63e7");
-      vmark(X(start)); vmark(X(ap)); vmark(X(end));
-
-      text(fmtDate(e.ds),X(start),28,"middle");
-      text(fmtDate(e.da)+" (AP)",X(ap),28,"middle");
-      text(fmtDate(e.de),X(end),28,"middle");
-
-      text(raw(e.S),X(start),135,"middle");
-      text(raw(e.A),X(ap),135,"middle");
-      text(raw(e.E),X(end),135,"middle");
-
-      const mid1=(X(start)+X(ap))/2, mid2=(X(ap)+X(end))/2;
-      label(mid1, 162, "100 % père (avant AP)");
-      label(mid2, 162, `${(e.k*100).toLocaleString("fr-FR",{maximumFractionDigits:2}).replace(/\u00a0/g," ")} % père (après AP)`);
-
-      function node(tag,attrs){const n=document.createElementNS(svgNS,tag);for(const k in attrs)n.setAttribute(k,attrs[k]);svg.appendChild(n);return n;}
-      function line(x1,y1,x2,y2,w,col){node("line",{x1,y1,x2,y2,stroke:col||"currentColor","stroke-width":w,"stroke-linecap":"round"});}
-      function vmark(x){node("line",{x1:x,y1:65,x2:x,y2:105,stroke:"currentColor","stroke-width":3});}
-      function text(t,x,y,anchor){const n=node("text",{x,y,"text-anchor":anchor||"start","font-size":14}); n.textContent=t;}
-      function label(x,y,t){const n=node("text",{x,y,"text-anchor":"middle","font-size":14}); n.textContent=t;}
-    }
-
-    [dStart,iStart,dAP,iAP,dEnd,iEnd,coef,price].forEach(el=>el.addEventListener('input', computeAndRender));
-
-    // Exemples rapides
-    document.getElementById('exA').onclick = ()=>{
-      dStart.value="2019-10-24"; iStart.value="0";
-      dAP.value="2020-05-27";    iAP.value="1715";
-      dEnd.value="2020-10-23";   iEnd.value="3112";
-      coef.value="0.80"; price.value="0.10";
-      computeAndRender();
-    };
-    document.getElementById('exB').onclick = ()=>{
-      dStart.value="2024-03-05"; iStart.value="12000";
-      dAP.value="2024-08-20";    iAP.value="18450";
-      dEnd.value="2025-03-05";   iEnd.value="25380";
-      coef.value="0.70"; price.value="";
-      computeAndRender();
-    };
-
-    // Init
-    document.getElementById('exA').click();
-
-    // Copie
-    document.getElementById('copy').onclick = ()=>{
-      document.getElementById('bap').select();
-      document.execCommand('copy');
-      const btn = document.getElementById('copy');
-      btn.textContent="Copié ✓"; setTimeout(()=>btn.textContent="Copier le BAP",900);
-    };
-  </script>
-</body>
-</html>
-
+    const fatherTotalEl = document.getElementById('fa
