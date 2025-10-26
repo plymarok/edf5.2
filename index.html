@@ -18,48 +18,51 @@
     --col-pere:#8b93ff; --col-fils:#34d399; --col-petit:#c084fc;
   }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+  body{margin:0;background:var(--bg);color:var(--text);font:17px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
   .topbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;justify-content:space-between;gap:12px;
-    padding:14px 18px;background:var(--panel);border-bottom:1px solid var(--border);box-shadow:var(--shadow)}
-  .topbar h1{font-size:18px;margin:0}
-  .btn{border-radius:10px;border:1px solid var(--border);background:var(--panel);color:var(--text);padding:10px 14px;cursor:pointer}
+    padding:16px 22px;background:var(--panel);border-bottom:1px solid var(--border);box-shadow:var(--shadow)}
+  .topbar h1{font-size:19px;margin:0}
+  .btn{border-radius:12px;border:1px solid var(--border);background:var(--panel);color:var(--text);padding:11px 16px;cursor:pointer;font-size:15px}
   .btn.primary{background:var(--accent);color:#fff;border-color:transparent}
   .btn.ghost{background:transparent}
-  .btn.small{padding:6px 10px;font-size:13px;border-radius:8px}
+  .btn.small{padding:7px 12px;font-size:14px;border-radius:10px}
   .btn.active{background:var(--accent);color:#fff;border-color:transparent}
 
-  .tabs{display:flex;gap:8px;margin:16px auto;max-width:1250px;padding:0 18px}
-  .tab{padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:var(--panel);cursor:pointer}
+  .tabs{display:flex;gap:10px;margin:18px auto;max-width:1600px;padding:0 22px}
+  .tab{padding:11px 16px;border:1px solid var(--border);border-radius:12px;background:var(--panel);cursor:pointer;font-size:15px}
   .tab.active{background:var(--accent);color:#fff;border-color:transparent}
 
-  .container{max-width:1250px;margin:0 auto 24px;padding:0 18px}
-  .duo{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-  .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px 16px 20px;box-shadow:var(--shadow)}
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
-  .row{display:grid;grid-template-columns:260px 1fr;gap:10px;align-items:center;margin:8px 0}
-  .help{grid-column:1/-1;margin:-4px 0 6px 260px;font-size:12px;color:var(--muted)}
-  .section{margin-top:14px}
-  .control{background:transparent;border:1px solid var(--border);border-radius:10px;padding:10px 12px;color:var(--text);width:100%}
+  .container{max-width:1600px;margin:0 auto 28px;padding:0 22px}
+  /* Calculateur plus large que l’exemple */
+  .duo{display:grid;grid-template-columns:minmax(380px,1fr) minmax(640px,1.35fr);gap:20px}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px 18px 22px;box-shadow:var(--shadow)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+  /* Colonne label élargie pour plus de lisibilité */
+  .row{display:grid;grid-template-columns:320px 1fr;gap:12px;align-items:center;margin:9px 0}
+  .help{grid-column:1/-1;margin:-2px 0 8px 320px;font-size:13px;color:var(--muted)}
+  .section{margin-top:16px}
+  .control{background:transparent;border:1px solid var(--border);border-radius:12px;padding:12px 14px;color:var(--text);width:100%;font-size:16px}
   .control:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-weak)}
   .muted{color:var(--muted)} .mono{font-variant-numeric:tabular-nums}
-  textarea{width:100%;min-height:120px;resize:vertical;border-radius:10px;border:1px solid var(--border);padding:10px}
-  .chroniqueLive{min-height:260px;border:1px solid var(--border);border-radius:12px;padding:14px;background:var(--panel)}
-  .chroniqueLive h4{margin:6px 0 8px} .chroniqueLive p{margin:6px 0}
-  .chip{display:inline-block;background:var(--accent-weak);padding:2px 8px;border-radius:999px}
+  textarea{width:100%;min-height:130px;resize:vertical;border-radius:12px;border:1px solid var(--border);padding:12px;font-size:15px}
+  .chroniqueLive{min-height:280px;border:1px solid var(--border);border-radius:14px;padding:16px;background:var(--panel);font-size:16px}
+  .chroniqueLive h4{margin:6px 0 10px;font-size:18px} .chroniqueLive p{margin:7px 0}
+  .chip{display:inline-block;background:var(--accent-weak);padding:3px 10px;border-radius:999px}
 
-  svg.timeline{width:100%;height:220px}
-  .legend{display:flex;gap:14px;align-items:center;font-size:13px;color:var(--muted);margin-top:8px}
-  .swatch{width:12px;height:12px;border-radius:3px;display:inline-block}
+  /* Timelines & bars plus grands */
+  svg.timeline{width:100%;height:300px}
+  .legend{display:flex;gap:16px;align-items:center;font-size:15px;color:var(--muted);margin-top:10px}
+  .swatch{width:14px;height:14px;border-radius:3px;display:inline-block}
   .sw-pere{background:var(--col-pere)} .sw-fils{background:var(--col-fils)} .sw-petit{background:var(--col-petit)}
 
   .tab-panel{display:none}
   .tab-panel.active{display:block}
 
   .example .control{background:rgba(127,127,127,.06)}
-  .example .control[disabled]{opacity:.8;cursor:not-allowed}
-  .ghost-note{font-size:12px;color:var(--muted);margin:8px 0 0}
+  .example .control[disabled]{opacity:.85;cursor:not-allowed}
+  .ghost-note{font-size:13px;color:var(--muted);margin:8px 0 0}
 
-  .view-toggle{display:flex;gap:8px;margin:10px 0}
+  .view-toggle{display:flex;gap:10px;margin:12px 0}
   .view{display:none}
   .view.active{display:block}
 </style>
@@ -107,8 +110,8 @@
           <div id="chroniqueLive1X" class="chroniqueLive"></div>
         </div>
       </div>
-      <div id="timeline1X" style="margin-top:14px"></div>
-      <div id="bars1X" style="margin-top:14px"></div>
+      <div id="timeline1X" style="margin-top:16px"></div>
+      <div id="bars1X" style="margin-top:16px"></div>
     </section>
 
     <!-- CALCULATEUR INTERACTIF -->
@@ -133,7 +136,7 @@
 
           <div class="row"><label>Prix (€/kWh) <span class="muted">(facultatif)</span></label><input id="price1" class="control" type="text" placeholder="ex. 0,10"></div>
 
-          <div style="display:flex;gap:8px;margin-top:10px">
+          <div style="display:flex;gap:10px;margin-top:12px">
             <button id="exA1" class="btn" type="button">Exemple (70 %)</button>
             <button id="exB1" class="btn" type="button">Exemple (80 %)</button>
             <button id="clear1" class="btn" type="button">Vider</button>
@@ -159,10 +162,10 @@
         <div id="bars1"></div>
       </div>
 
-      <div class="panel" style="margin-top:14px;border-color:var(--border)">
+      <div class="panel" style="margin-top:16px;border-color:var(--border)">
         <h4>2) BAP — Commentaire normé</h4>
         <textarea id="bap1" class="mono" readonly></textarea>
-        <div style="display:flex;gap:10px;margin-top:8px">
+        <div style="display:flex;gap:12px;margin-top:10px">
           <button id="copy1" class="btn primary" type="button">Copier le BAP</button>
           <span class="muted">Tolérance ± 1 kWh • Arrondi sur la part père</span>
         </div>
@@ -211,8 +214,8 @@
         </div>
       </div>
 
-      <div id="timeline2X" style="margin-top:14px"></div>
-      <div id="bars2X" style="margin-top:14px"></div>
+      <div id="timeline2X" style="margin-top:16px"></div>
+      <div id="bars2X" style="margin-top:16px"></div>
       <div class="legend">
         <span class="swatch sw-pere"></span> père
         <span class="swatch sw-fils"></span> fils
@@ -250,7 +253,7 @@
 
           <div class="row"><label>Prix (€/kWh) <span class="muted">(facultatif)</span></label><input id="price2" class="control" type="text" placeholder="ex. 0,10"></div>
 
-          <div style="display:flex;gap:8px;margin-top:10px">
+          <div style="display:flex;gap:10px;margin-top:12px">
             <button id="ex2" class="btn" type="button">Charger un exemple</button>
             <button id="clear2" class="btn" type="button">Vider</button>
           </div>
@@ -281,10 +284,10 @@
         <span class="swatch sw-petit"></span> petit-fils
       </div>
 
-      <div class="panel" style="margin-top:14px;border-color:var(--border)">
+      <div class="panel" style="margin-top:16px;border-color:var(--border)">
         <h4>2) BAP — Commentaire normé</h4>
         <textarea id="bap2" class="mono" readonly></textarea>
-        <div style="display:flex;gap:10px;margin-top:8px">
+        <div style="display:flex;gap:12px;margin-top:10px">
           <button id="copy2" class="btn primary" type="button">Copier le BAP</button>
           <span class="muted">Après AP2, les 3 parts doivent faire 100 %</span>
         </div>
@@ -328,137 +331,138 @@ function guessPeriodLabel(a,b){
   return `période de ${d} jours`;
 }
 
-/* ====== Timeline (SVG) ====== */
+/* ====== Timeline (SVG) — taille & textes agrandis ====== */
 function drawTimeline(host, marks){
   host.innerHTML="";
   const svgNS="http://www.w3.org/2000/svg";
   const svg=document.createElementNS(svgNS,"svg");
   svg.setAttribute("class","timeline");
-  svg.setAttribute("viewBox","0 0 1100 220");
+  svg.setAttribute("viewBox","0 0 1200 300");
   svg.setAttribute("preserveAspectRatio","xMidYMid meet");
   host.appendChild(svg);
 
   const valid=marks.filter(m=>m.d instanceof Date && !isNaN(m.d));
   if(valid.length<2){
     const p=document.createElement("div");
-    p.className="muted"; p.textContent="Renseigne la période et les jalons : la ligne de vie se dessine.";
+    p.className="muted"; p.style.fontSize="16px";
+    p.textContent="Renseigne la période et les jalons : la ligne de vie se dessine.";
     host.appendChild(p); return;
   }
   valid.sort((a,b)=>a.d-b.d);
   const min=valid[0].d.getTime(), max=valid[valid.length-1].d.getTime();
   const span=Math.max(1,(max-min));
-  const X=t=>40+((t-min)/span)*1020;
+  const X=t=>60+((t-min)/span)*1060;
 
   function N(tag,attrs){const n=document.createElementNS(svgNS,tag);for(const k in attrs)n.setAttribute(k,attrs[k]);svg.appendChild(n);return n;}
-  function vmark(x){N("line",{x1:x,y1:70,x2:x,y2:110,stroke:"currentColor","stroke-width":3});}
-  function label(t,x,y,anchor="start",size=14){const n=N("text",{x,y,"text-anchor":anchor,"font-size":size}); n.textContent=t;}
+  function vmark(x){N("line",{x1:x,y1:118,x2:x,y2:162,stroke:"currentColor","stroke-width":4});}
+  function label(t,x,y,anchor="start",size=16,weight="normal"){const n=N("text",{x,y,"text-anchor":anchor,"font-size":size,"font-weight":weight}); n.textContent=t;}
 
   const fstart=marks.find(m=>m.tag==="fstart"), fend=marks.find(m=>m.tag==="fend");
   if(fstart?.d && fend?.d){
     const x1=X(fstart.d.getTime()), x2=X(fend.d.getTime());
-    N("rect",{x:Math.min(x1,x2),y:78,width:Math.abs(x2-x1),height:24,fill:"var(--accent-weak)",opacity:"0.6"});
-    label("Période de facturation",(x1+x2)/2,66,"middle",12);
+    N("rect",{x:Math.min(x1,x2),y:126,width:Math.abs(x2-x1),height:28,fill:"var(--accent-weak)",opacity:"0.6"});
+    label("Période de facturation",(x1+x2)/2,104,"middle",15,"600");
   }
 
-  N("line",{x1:X(valid[0].d.getTime()),y1:90,x2:X(valid[valid.length-1].d.getTime()),y2:90,stroke:"#2a63e7","stroke-width":6,"stroke-linecap":"round"});
+  N("line",{x1:X(valid[0].d.getTime()),y1:140,x2:X(valid[valid.length-1].d.getTime()),y2:140,stroke:"#2a63e7","stroke-width":8,"stroke-linecap":"round"});
 
   valid.forEach(m=>{
     const x=X(m.d.getTime()); vmark(x);
-    label(m.d.toLocaleDateString("fr-FR"),x,36,"middle");
-    if(Number.isFinite(m.idx)) label(raw(m.idx),x,140,"middle");
-    if(m.lbl) label(m.lbl,x,168,"middle",12);
+    label(m.d.toLocaleDateString("fr-FR"),x,78,"middle",15,"600");
+    if(Number.isFinite(m.idx)) label(raw(m.idx),x,192,"middle",15);
+    if(m.lbl) label(m.lbl,x,218,"middle",14);
   });
 }
 
-/* ====== Histogrammes ====== */
+/* ====== Histogrammes — tailles augmentées ====== */
 function drawStackedPF2(host, data){
   const {q1,q2,q3,p1,c1,p2,c2,g2, ds, da1, da2, de} = data;
   host.innerHTML="";
   const svgNS="http://www.w3.org/2000/svg";
   const svg=document.createElementNS(svgNS,"svg");
-  svg.setAttribute("viewBox","0 0 1100 300");
+  svg.setAttribute("viewBox","0 0 1200 360");
   svg.setAttribute("preserveAspectRatio","xMidYMid meet");
   host.appendChild(svg);
 
   function N(tag,attrs){const n=document.createElementNS(svgNS,tag);for(const k in attrs)n.setAttribute(k,attrs[k]);svg.appendChild(n);return n;}
-  function label(t,x,y,anchor="start",size=13){const n=N("text",{x,y,"text-anchor":anchor,"font-size":size,fill:"currentColor"}); n.textContent=t;}
+  function label(t,x,y,anchor="start",size=16){const n=N("text",{x,y,"text-anchor":anchor,"font-size":size,fill:"currentColor"}); n.textContent=t;}
   function safe(n){return Number.isFinite(n)?n:0}
 
   function barRow(y, segments, title, qty, caption){
-    const left=160, right=1060, width=right-left, height=28, radius=6;
+    const left=180, right=1120, width=right-left, height=34, radius=7;
     const sumW=segments.reduce((s,s1)=>s+safe(s1.w),0)||1;
     let x=left;
 
-    label(`${title}`, left-12, y+20, "end", 13);
-    label(`${safe(qty)} kWh`, right+10, y+20, "start", 13);
+    label(`${title}`, left-14, y+22, "end", 16);
+    label(`${safe(qty)} kWh`, right+14, y+22, "start", 16);
 
     segments.forEach(s=>{
       const w = width*(safe(s.w)/sumW);
       if(w<=0) return;
-      N("rect",{x, y, width:w, height, rx:radius, ry:radius, fill:s.color, opacity:0.9});
-      if(w>60) label(s.text, x+8, y+18, "start", 12);
-      x += w + 1;
+      N("rect",{x, y, width:w, height, rx:radius, ry:radius, fill:s.color, opacity:0.92});
+      if(w>70) label(s.text, x+10, y+22, "start", 15);
+      x += w + 1.5;
     });
 
-    label(caption, left, y+46, "start", 12);
+    label(caption, left, y+52, "start", 15);
   }
 
-  label("Histogramme par segment (ventilation des kWh)", 160, 26, "start", 14);
+  label("Histogramme par segment (ventilation des kWh)", 180, 30, "start", 17);
 
   const capS1 = `S1 (avant AP1) : du ${fmtDate(ds)} au ${fmtDate(da1)} → ${safe(q1)} kWh, 100 % père.`;
   const capS2 = `S2 (AP1 → AP2) : du ${fmtDate(da1)} au ${fmtDate(da2)} → ${safe(q2)} kWh dont ${safe(p1)} père & ${safe(c1)} fils.`;
   const capS3 = `S3 (après AP2) : du ${fmtDate(da2)} au ${fmtDate(de)} → ${safe(q3)} kWh dont ${safe(p2)} père, ${safe(c2)} fils, ${safe(g2)} petit-fils.`;
 
-  barRow(60,  [{w:q1, color:"var(--col-pere)", text:`père ${safe(q1)}`}], "S1 (avant AP1)", q1, capS1);
-  barRow(130, [{w:p1, color:"var(--col-pere)", text:`père ${safe(p1)}`},{w:c1, color:"var(--col-fils)", text:`fils ${safe(c1)}`}], "S2 (AP1 → AP2)", q2, capS2);
-  barRow(200, [{w:p2, color:"var(--col-pere)", text:`père ${safe(p2)}`},{w:c2, color:"var(--col-fils)", text:`fils ${safe(c2)}`},{w:g2, color:"var(--col-petit)", text:`petit-fils ${safe(g2)}`}], "S3 (après AP2)", q3, capS3);
+  barRow(70,  [{w:q1, color:"var(--col-pere)", text:`père ${safe(q1)}`}], "S1 (avant AP1)", q1, capS1);
+  barRow(150, [{w:p1, color:"var(--col-pere)", text:`père ${safe(p1)}`},{w:c1, color:"var(--col-fils)", text:`fils ${safe(c1)}`}], "S2 (AP1 → AP2)", q2, capS2);
+  barRow(230, [{w:p2, color:"var(--col-pere)", text:`père ${safe(p2)}`},{w:c2, color:"var(--col-fils)", text:`fils ${safe(c2)}`},{w:g2, color:"var(--col-petit)", text:`petit-fils ${safe(g2)}`}], "S3 (après AP2)", q3, capS3);
 
   const tot = safe(q1)+safe(q2)+safe(q3);
-  label(`Total période : ${tot} kWh`, 160, 270, "start", 13);
+  label(`Total période : ${tot} kWh`, 180, 320, "start", 16);
 }
 
 function drawStackedPF1(host, data){
-  const {q1,q2,p2,c2, ds, da, de} = data; // q1=S1, q2=S2 ; p2/c2 sur S2
+  const {q1,q2,p2,c2, ds, da, de} = data;
   host.innerHTML="";
   const svgNS="http://www.w3.org/2000/svg";
   const svg=document.createElementNS(svgNS,"svg");
-  svg.setAttribute("viewBox","0 0 1100 240");
+  svg.setAttribute("viewBox","0 0 1200 300");
   svg.setAttribute("preserveAspectRatio","xMidYMid meet");
   host.appendChild(svg);
 
   function N(tag,attrs){const n=document.createElementNS(svgNS,tag);for(const k in attrs)n.setAttribute(k,attrs[k]);svg.appendChild(n);return n;}
-  function label(t,x,y,anchor="start",size=13){const n=N("text",{x,y,"text-anchor":anchor,"font-size":size,fill:"currentColor"}); n.textContent=t;}
+  function label(t,x,y,anchor="start",size=16){const n=N("text",{x,y,"text-anchor":anchor,"font-size":size,fill:"currentColor"}); n.textContent=t;}
   function safe(n){return Number.isFinite(n)?n:0}
 
   function barRow(y, segments, title, qty, caption){
-    const left=160, right=1060, width=right-left, height=28, radius=6;
+    const left=180, right=1120, width=right-left, height=34, radius=7;
     const sumW=segments.reduce((s,s1)=>s+safe(s1.w),0)||1;
     let x=left;
 
-    label(`${title}`, left-12, y+20, "end", 13);
-    label(`${safe(qty)} kWh`, right+10, y+20, "start", 13);
+    label(`${title}`, left-14, y+22, "end", 16);
+    label(`${safe(qty)} kWh`, right+14, y+22, "start", 16);
 
     segments.forEach(s=>{
       const w = width*(safe(s.w)/sumW);
       if(w<=0) return;
-      N("rect",{x, y, width:w, height, rx:radius, ry:radius, fill:s.color, opacity:0.9});
-      if(w>60) label(s.text, x+8, y+18, "start", 12);
-      x += w + 1;
+      N("rect",{x, y, width:w, height, rx:radius, ry:radius, fill:s.color, opacity:0.92});
+      if(w>70) label(s.text, x+10, y+22, "start", 15);
+      x += w + 1.5;
     });
 
-    label(caption, left, y+46, "start", 12);
+    label(caption, left, y+52, "start", 15);
   }
 
-  label("Histogramme par segment (ventilation des kWh)", 160, 26, "start", 14);
+  label("Histogramme par segment (ventilation des kWh)", 180, 30, "start", 17);
 
   const capS1 = `S1 (avant AP) : du ${fmtDate(ds)} au ${fmtDate(da)} → ${safe(q1)} kWh, 100 % père.`;
   const capS2 = `S2 (après AP) : du ${fmtDate(da)} au ${fmtDate(de)} → ${safe(q2)} kWh dont ${safe(p2)} père & ${safe(c2)} fils.`;
 
-  barRow(60, [{w:q1, color:"var(--col-pere)", text:`père ${safe(q1)}`}], "S1 (avant AP)", q1, capS1);
-  barRow(130,[{w:p2, color:"var(--col-pere)", text:`père ${safe(p2)}`},{w:c2, color:"var(--col-fils)", text:`fils ${safe(c2)}`}],"S2 (après AP)", q2, capS2);
+  barRow(80, [{w:q1, color:"var(--col-pere)", text:`père ${safe(q1)}`}], "S1 (avant AP)", q1, capS1);
+  barRow(165,[{w:p2, color:"var(--col-pere)", text:`père ${safe(p2)}`},{w:c2, color:"var(--col-fils)", text:`fils ${safe(c2)}`}],"S2 (après AP)", q2, capS2);
 
   const tot = safe(q1)+safe(q2);
-  label(`Total période : ${tot} kWh`, 160, 200, "start", 13);
+  label(`Total période : ${tot} kWh`, 180, 260, "start", 16);
 }
 
 /* =================== PÈRE & FILS — INTERACTIF =================== */
@@ -473,7 +477,6 @@ const timeline1=document.getElementById('timeline1'), bars1=document.getElementB
 let chroniqueLive = document.getElementById('chroniqueLive1');
 let view1="time"; // time|bars
 
-/* Chronique 1 AP (avec résumé) */
 function renderChroniqueLive(values){
   const { FS, FE, ds, S, da, A, de, E, k, q1, q2, fatherAfter, childAfter, fatherTotal, validOrder, ok1, ok2, ready } = values;
   const L = [];
@@ -819,12 +822,10 @@ window.addEventListener('DOMContentLoaded', ()=>{
   });
   document.getElementById('copy1').addEventListener('click', ()=>{ bap1.select(); document.execCommand('copy'); });
 
-  // PF1 vue toggle
   v1timeBtn.addEventListener('click', ()=>{view1="time"; v1timeBtn.classList.add('active'); v1barsBtn.classList.remove('active'); view1Time.classList.add('active'); view1Bars.classList.remove('active'); compute1();});
   v1barsBtn.addEventListener('click', ()=>{view1="bars"; v1barsBtn.classList.add('active'); v1timeBtn.classList.remove('active'); view1Bars.classList.add('active'); view1Time.classList.remove('active'); compute1();});
 
-  // PF1 exemple (verrouillé)
-  compute1Example();
+  compute1Example(); // exemple verrouillé
 
   // PF2 interactif
   [fStart2,fEnd2,dStart2,iStart2,dAP21,iAP21,dAP22,iAP22,dEnd2,iEnd2,
@@ -852,14 +853,10 @@ window.addEventListener('DOMContentLoaded', ()=>{
 
   document.getElementById('copy2').addEventListener('click', ()=>{ bap2.select(); document.execCommand('copy'); });
 
-  // PF2 vue toggle
   v2timeBtn.addEventListener('click', ()=>{view2="time"; v2timeBtn.classList.add('active'); v2barsBtn.classList.remove('active'); view2Time.classList.add('active'); view2Bars.classList.remove('active'); compute2();});
   v2barsBtn.addEventListener('click', ()=>{view2="bars"; v2barsBtn.classList.add('active'); v2timeBtn.classList.remove('active'); view2Bars.classList.add('active'); view2Time.classList.remove('active'); compute2();});
 
-  // PF2 exemple (verrouillé)
-  compute2Example();
-
-  // ⚠️ Aucun préremplissage automatique du formulaire PF1 — il reste vide au chargement.
+  compute2Example(); // exemple verrouillé
 });
 </script>
 </body>
