@@ -422,6 +422,22 @@ function renderChroniqueLive2(v){
       <p><b>S3</b> — Après AP2 : ${E} − ${A2} = <b>${q3} kWh</b> → père <b>${p2}</b> • fils <b>${c2}</b> • petit-fils <b>${g2}</b>.</p>
       <p><b>Total père attendu :</b> <b>${totP} kWh</b>.</p>
       <p>${okSeg2?"✅":"❌"} S2 : parts = Q₂ • ${okSeg3?"✅":"❌"} S3 : parts = Q₃ • ${okDelta?"✅":"❌"} S1+S2+S3 = Δindex.</p>`);
+
+    /* ===== Résumé littéraire final ===== */
+    const repS2 = `${pctText(k1)} % au père et ${pctText(1 - k1)} % au fils`;
+    const repS3 = `${pctText(k2p)} % au père, ${pctText(k2f)} % au fils, ${pctText(k2c)} % au petit-fils`;
+
+    L.push(
+      `<h4>Résumé</h4>
+       <p>Sur la <span class="chip">${guessPeriodLabel(FS, FE)}</span>, deux événements jalonnent la vie du contrat :
+       <b>AP1 le ${fmtDate(da1)}</b> (index ${A1}) fait entrer le <i>fils</i>. 
+       De cette date jusqu’à <b>AP2 le ${fmtDate(da2)}</b> (index ${A2}), la production est ventilée ${repS2}.
+       <b>AP2</b> marque ensuite l’arrivée du <i>petit-fils</i> : d’AP2 à l’anniversaire (${fmtDate(de)}),
+       la répartition devient ${repS3}.</p>
+
+       <p>Au final, la part facturable au <b>père</b> est de <b>${totP} kWh</b> 
+       (= ${q1} + ${p1} + ${p2}).</p>`
+    );
   } else if (ds && da1 && da2 && de && !validOrder){
     L.push(`<p class="ko">⚠ Ordre incohérent : fin N-1 ≤ AP1 ≤ AP2 ≤ anniversaire et index croissants requis.</p>`);
   }
