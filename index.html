@@ -25,6 +25,8 @@
   .btn{border-radius:10px;border:1px solid var(--border);background:var(--panel);color:var(--text);padding:10px 14px;cursor:pointer}
   .btn.primary{background:var(--accent);color:#fff;border-color:transparent}
   .btn.ghost{background:transparent}
+  .btn.small{padding:6px 10px;font-size:13px;border-radius:8px}
+  .btn.active{background:var(--accent);color:#fff;border-color:transparent}
 
   .tabs{display:flex;gap:8px;margin:16px auto;max-width:1250px;padding:0 18px}
   .tab{padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:var(--panel);cursor:pointer}
@@ -53,10 +55,13 @@
   .tab-panel{display:none}
   .tab-panel.active{display:block}
 
-  /* Inputs d’exemple (verrouillés) */
   .example .control{background:rgba(127,127,127,.06)}
   .example .control[disabled]{opacity:.8;cursor:not-allowed}
   .ghost-note{font-size:12px;color:var(--muted);margin:8px 0 0}
+
+  .view-toggle{display:flex;gap:8px;margin:10px 0}
+  .view{display:none}
+  .view.active{display:block}
 </style>
 </head>
 <body>
@@ -103,6 +108,7 @@
         </div>
       </div>
       <div id="timeline1X" style="margin-top:14px"></div>
+      <div id="bars1X" style="margin-top:14px"></div>
     </section>
 
     <!-- CALCULATEUR INTERACTIF -->
@@ -139,7 +145,19 @@
           <div id="chroniqueLive1" class="chroniqueLive"></div>
         </div>
       </div>
-      <div id="timeline1" style="margin-top:14px"></div>
+
+      <!-- Choix d’affichage -->
+      <div class="view-toggle">
+        <button id="v1time" class="btn small active" type="button">Ligne de vie</button>
+        <button id="v1bars" class="btn small" type="button">Histogramme par segment</button>
+      </div>
+
+      <div id="view1-time" class="view active">
+        <div id="timeline1"></div>
+      </div>
+      <div id="view1-bars" class="view">
+        <div id="bars1"></div>
+      </div>
 
       <div class="panel" style="margin-top:14px;border-color:var(--border)">
         <h4>2) BAP — Commentaire normé</h4>
@@ -244,8 +262,19 @@
         </div>
       </div>
 
-      <div id="timeline2" style="margin-top:14px"></div>
-      <div id="timeline2bars" style="margin-top:14px"></div>
+      <!-- Choix d’affichage -->
+      <div class="view-toggle">
+        <button id="v2time" class="btn small active" type="button">Ligne de vie</button>
+        <button id="v2bars" class="btn small" type="button">Histogramme par segment</button>
+      </div>
+
+      <div id="view2-time" class="view active">
+        <div id="timeline2"></div>
+      </div>
+      <div id="view2-bars" class="view">
+        <div id="timeline2bars"></div>
+      </div>
+
       <div class="legend">
         <span class="swatch sw-pere"></span> père
         <span class="swatch sw-fils"></span> fils
@@ -341,10 +370,9 @@ function drawTimeline(host, marks){
   });
 }
 
-/* ====== Histogramme 2 AP (marge gauche élargie) ====== */
+/* ====== Histogrammes ====== */
 function drawStackedPF2(host, data){
   const {q1,q2,q3,p1,c1,p2,c2,g2, ds, da1, da2, de} = data;
-
   host.innerHTML="";
   const svgNS="http://www.w3.org/2000/svg";
   const svg=document.createElementNS(svgNS,"svg");
@@ -389,16 +417,63 @@ function drawStackedPF2(host, data){
   label(`Total période : ${tot} kWh`, 160, 270, "start", 13);
 }
 
+function drawStackedPF1(host, data){
+  const {q1,q2,p2,c2, ds, da, de} = data; // q1=S1, q2=S2 ; p2/c2 sur S2
+  host.innerHTML="";
+  const svgNS="http://www.w3.org/2000/svg";
+  const svg=document.createElementNS(svgNS,"svg");
+  svg.setAttribute("viewBox","0 0 1100 240");
+  svg.setAttribute("preserveAspectRatio","xMidYMid meet");
+  host.appendChild(svg);
+
+  function N(tag,attrs){const n=document.createElementNS(svgNS,tag);for(const k in attrs)n.setAttribute(k,attrs[k]);svg.appendChild(n);return n;}
+  function label(t,x,y,anchor="start",size=13){const n=N("text",{x,y,"text-anchor":anchor,"font-size":size,fill:"currentColor"}); n.textContent=t;}
+  function safe(n){return Number.isFinite(n)?n:0}
+
+  function barRow(y, segments, title, qty, caption){
+    const left=160, right=1060, width=right-left, height=28, radius=6;
+    const sumW=segments.reduce((s,s1)=>s+safe(s1.w),0)||1;
+    let x=left;
+
+    label(`${title}`, left-12, y+20, "end", 13);
+    label(`${safe(qty)} kWh`, right+10, y+20, "start", 13);
+
+    segments.forEach(s=>{
+      const w = width*(safe(s.w)/sumW);
+      if(w<=0) return;
+      N("rect",{x, y, width:w, height, rx:radius, ry:radius, fill:s.color, opacity:0.9});
+      if(w>60) label(s.text, x+8, y+18, "start", 12);
+      x += w + 1;
+    });
+
+    label(caption, left, y+46, "start", 12);
+  }
+
+  label("Histogramme par segment (ventilation des kWh)", 160, 26, "start", 14);
+
+  const capS1 = `S1 (avant AP) : du ${fmtDate(ds)} au ${fmtDate(da)} → ${safe(q1)} kWh, 100 % père.`;
+  const capS2 = `S2 (après AP) : du ${fmtDate(da)} au ${fmtDate(de)} → ${safe(q2)} kWh dont ${safe(p2)} père & ${safe(c2)} fils.`;
+
+  barRow(60, [{w:q1, color:"var(--col-pere)", text:`père ${safe(q1)}`}], "S1 (avant AP)", q1, capS1);
+  barRow(130,[{w:p2, color:"var(--col-pere)", text:`père ${safe(p2)}`},{w:c2, color:"var(--col-fils)", text:`fils ${safe(c2)}`}],"S2 (après AP)", q2, capS2);
+
+  const tot = safe(q1)+safe(q2);
+  label(`Total période : ${tot} kWh`, 160, 200, "start", 13);
+}
+
 /* =================== PÈRE & FILS — INTERACTIF =================== */
 const fStart1=document.getElementById('fStart1'), fEnd1=document.getElementById('fEnd1');
 const dStart1=document.getElementById('dStart1'), iStart1=document.getElementById('iStart1');
 const dAP1=document.getElementById('dAP1'), iAP1=document.getElementById('iAP1');
 const dEnd1=document.getElementById('dEnd1'), iEnd1=document.getElementById('iEnd1');
 const coef1=document.getElementById('coef1'), price1=document.getElementById('price1');
-const timeline1=document.getElementById('timeline1'), bap1=document.getElementById('bap1');
+const view1Time=document.getElementById('view1-time'), view1Bars=document.getElementById('view1-bars');
+const v1timeBtn=document.getElementById('v1time'), v1barsBtn=document.getElementById('v1bars');
+const timeline1=document.getElementById('timeline1'), bars1=document.getElementById('bars1'), bap1=document.getElementById('bap1');
 let chroniqueLive = document.getElementById('chroniqueLive1');
+let view1="time"; // time|bars
 
-/* Chronique 1 AP */
+/* Chronique 1 AP (avec résumé) */
 function renderChroniqueLive(values){
   const { FS, FE, ds, S, da, A, de, E, k, q1, q2, fatherAfter, childAfter, fatherTotal, validOrder, ok1, ok2, ready } = values;
   const L = [];
@@ -424,6 +499,11 @@ function renderChroniqueLive(values){
        <p>Après AP : <b>${E} − ${A} = ${q2} kWh</b> → père <b>${fatherAfter}</b> • fils <b>${childAfter}</b>.</p>
        <p><b>Part père attendue :</b> <b>${fatherTotal} kWh</b>.</p>
        <p>${ok1 ? "✅" : "❌"} Les parts recomposent bien Q_après • ${ok2 ? "✅" : "❌"} Q_avant + Q_après = Δindex.</p>`);
+    L.push(`<h4>Résumé</h4>
+      <p>Sur cette période, l’augmentation de puissance a lieu le <b>${fmtDate(da)}</b> (index <b>${A}</b>). 
+      Du <b>${fmtDate(ds)}</b> au <b>${fmtDate(da)}</b>, tout revient au père. 
+      Du <b>${fmtDate(da)}</b> au <b>${fmtDate(de)}</b>, la production se répartit <b>${pctText(k)} %</b> au père et <b>${pctText(1-k)} %</b> au fils.
+      La <b>part facturable au père</b> s’établit à <b>${fatherTotal} kWh</b>.</p>`);
   } else if (ds && da && de && !validOrder) {
     L.push(`<p class="muted">⚠ Ordre requis : <b>N-1 ≤ AP ≤ Anniversaire</b> et index croissants.</p>`);
   }
@@ -447,16 +527,24 @@ function compute1(){
     ok1=(fatherAfter+childAfter===q2); ok2=((E-S)===(q1+q2));
   }
 
-  drawTimeline(timeline1,[
-    {tag:"fstart",d:FS?new Date(FS):null},
-    {tag:"fend",d:FE?new Date(FE):null},
-    {d:ds?new Date(ds):null,idx:S},
-    {d:da?new Date(da):null,idx:A},
-    {d:de?new Date(de):null,idx:E},
-    {d:(ds&&da)?new Date((+new Date(ds)+(+new Date(da)))/2):null,lbl:"100 % père"},
-    {d:(da&&de)?new Date((+new Date(da)+(+new Date(de)))/2):null,lbl:(k>=0&&k<=1?`${pctText(k)} % père`:"")}
-  ]);
+  // vues
+  if(view1==="time"){
+    drawTimeline(timeline1,[
+      {tag:"fstart",d:FS?new Date(FS):null},
+      {tag:"fend",d:FE?new Date(FE):null},
+      {d:ds?new Date(ds):null,idx:S},
+      {d:da?new Date(da):null,idx:A},
+      {d:de?new Date(de):null,idx:E},
+      {d:(ds&&da)?new Date((+new Date(ds)+(+new Date(da)))/2):null,lbl:"100 % père"},
+      {d:(da&&de)?new Date((+new Date(da)+(+new Date(de)))/2):null,lbl:(k>=0&&k<=1?`${pctText(k)} % père`:"")}
+    ]);
+  } else {
+    const p2=Number.isFinite(q2)&&Number.isFinite(k)?Math.round(q2*k):NaN;
+    const c2=Number.isFinite(q2)&&Number.isFinite(p2)?q2-p2:NaN;
+    drawStackedPF1(bars1,{q1,q2,p2,c2,ds,da,de});
+  }
 
+  // BAP
   const coefPct=pctText(k);
   if(ready){
     let line = `BAP : augmentation de puissance au ${fmtDate(da)} (index ${raw(A)}) ; ` +
@@ -505,6 +593,10 @@ function compute1Example(){
     {d:new Date((+new Date(da)+(+new Date(de)))/2),lbl:`${pctText(k)} % père`}
   ]);
 
+  drawStackedPF1(document.getElementById('bars1X'),{
+    q1, q2, p2:fatherAfter, c2:childAfter, ds, da, de
+  });
+
   const chronique = document.getElementById('chroniqueLive1X');
   chronique.innerHTML = `
     <h4>Le cadre</h4>
@@ -527,9 +619,12 @@ const coef22_pere=document.getElementById('coef22_pere');
 const coef22_fils=document.getElementById('coef22_fils');
 const coef22_petit=document.getElementById('coef22_petit');
 const price2=document.getElementById('price2');
+const v2timeBtn=document.getElementById('v2time'), v2barsBtn=document.getElementById('v2bars');
 const timeline2=document.getElementById('timeline2'), bap2=document.getElementById('bap2');
 const chrono2=document.getElementById('chroniqueLive2');
 const bars2=document.getElementById('timeline2bars');
+const view2Time=document.getElementById('view2-time'), view2Bars=document.getElementById('view2-bars');
+let view2="time"; // time|bars
 
 function renderChroniqueLive2(v){
   const {FS,FE,ds,S,da1,A1,da2,A2,de,E,k1,k2p,k2f,k2c,
@@ -573,8 +668,8 @@ function renderChroniqueLive2(v){
 
     L.push(
       `<h4>Résumé</h4>
-       <p>Sur cette période, <b>AP1 le ${fmtDate(da1)}</b> (index ${A1}) fait entrer le fils : la production est ventilée ${repS2} jusqu’à <b>AP2 le ${fmtDate(da2)}</b> (index ${A2}). Puis, d’AP2 à l’anniversaire (${fmtDate(de)}), la répartition devient ${repS3}.</p>
-       <p>La part facturable au <b>père</b> s’établit à <b>${totP} kWh</b> (= ${q1} + ${p1} + ${p2}).</p>`
+       <p>Sur cette période, <b>AP1 le ${fmtDate(da1)}</b> (index ${A1}) fait entrer le fils : la production est ventilée ${repS2} jusqu’à <b>AP2 le ${fmtDate(da2)}</b> (index ${A2}). Puis, d’AP2 à l’anniversaire (${fmtDate(de)}), la répartition devient ${repS3}.
+       La <b>part facturable au père</b> s’établit à <b>${totP} kWh</b> (= ${q1} + ${p1} + ${p2}).</p>`
     );
   } else if (ds && da1 && da2 && de && !validOrder){
     L.push(`<p class="muted">⚠ Ordre chronologique : <b>N-1 ≤ AP1 ≤ AP2 ≤ Anniversaire</b> et index croissants.</p>`);
@@ -610,19 +705,21 @@ function compute2(){
     okDelta = ((E - S) === (q1 + q2 + q3));
   }
 
-  drawTimeline(timeline2,[
-    {tag:"fstart", d:FS?new Date(FS):null},
-    {tag:"fend",   d:FE?new Date(FE):null},
-    {d:ds?new Date(ds):null,  idx:S},
-    {d:da1?new Date(da1):null,idx:A1},
-    {d:da2?new Date(da2):null,idx:A2},
-    {d:de?new Date(de):null,  idx:E},
-    {d:(ds&&da1)?new Date((+new Date(ds)+(+new Date(da1)))/2):null,lbl:"S1 : 100 % père"},
-    {d:(da1&&da2)?new Date((+new Date(da1)+(+new Date(da2)))/2):null,lbl:(Number.isFinite(k1)?`S2 : ${pctText(k1)} % père`:"S2")},
-    {d:(da2&&de)?new Date((+new Date(da2)+(+new Date(de)))/2):null,lbl:(coefsOK2?`S3 : ${pctText(k2p)} % père`:"S3")}
-  ]);
-
-  drawStackedPF2(bars2, { q1,q2,q3,p1,c1,p2,c2,g2, ds, da1, da2, de });
+  if(view2==="time"){
+    drawTimeline(timeline2,[
+      {tag:"fstart", d:FS?new Date(FS):null},
+      {tag:"fend",   d:FE?new Date(FE):null},
+      {d:ds?new Date(ds):null,  idx:S},
+      {d:da1?new Date(da1):null,idx:A1},
+      {d:da2?new Date(da2):null,idx:A2},
+      {d:de?new Date(de):null,  idx:E},
+      {d:(ds&&da1)?new Date((+new Date(ds)+(+new Date(da1)))/2):null,lbl:"S1 : 100 % père"},
+      {d:(da1&&da2)?new Date((+new Date(da1)+(+new Date(da2)))/2):null,lbl:(Number.isFinite(k1)?`S2 : ${pctText(k1)} % père`:"S2")},
+      {d:(da2&&de)?new Date((+new Date(da2)+(+new Date(de)))/2):null,lbl:(coefsOK2?`S3 : ${pctText(k2p)} % père`:"S3")}
+    ]);
+  } else {
+    drawStackedPF2(bars2, { q1,q2,q3,p1,c1,p2,c2,g2, ds, da1, da2, de });
+  }
 
   if (ready){
     let line = [
@@ -636,9 +733,7 @@ function compute2(){
     bap2.value = (pStr && Number.isFinite(pNum))
       ? `${line} soit ${totP} × ${pStr} = ${(totP*pNum).toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})}€`
       : line;
-  } else {
-    bap2.value = "";
-  }
+  } else { bap2.value = ""; }
 
   renderChroniqueLive2({FS,FE,ds,S,da1,A1,da2,A2,de,E,k1,k2p,k2f,k2c,
                         q1,q2,q3,p1,c1,p2,c2,g2,totP,
@@ -653,10 +748,6 @@ function compute2Example(){
   const da2="2024-09-15", A2=9100;
   const de="2024-12-31", E=11200;
   const k1=0.70, k2p=0.60, k2f=0.25, k2c=0.15;
-
-  // Remplir les champs disabled
-  ['fStart2X','fEnd2X','dStart2X','iStart2X','dAP21X','iAP21X','dAP22X','iAP22X','dEnd2XX','iEnd2X','coef21_pereX','coef22_pereX','coef22_filsX','coef22_petitX']
-    .forEach(id=>document.getElementById(id));
 
   document.getElementById('fStart2X').value=FS;
   document.getElementById('fEnd2X').value=FE;
@@ -673,12 +764,10 @@ function compute2Example(){
   document.getElementById('coef22_filsX').value=k2f;
   document.getElementById('coef22_petitX').value=k2c;
 
-  // Calculs
   const q1=A1-S, q2=A2-A1, q3=E-A2;
   const p1=Math.round(q2*k1), c1=q2-p1;
   const p2=Math.round(q3*k2p), c2=Math.round(q3*k2f), g2=q3-p2-c2;
 
-  // Chronique
   document.getElementById('chroniqueLive2X').innerHTML = `
     <h4>Le cadre</h4>
     <p>Exemple d’une <span class="chip">${guessPeriodLabel(FS,FE)}</span> du <b>${fmtDate(FS)}</b> au <b>${fmtDate(FE)}</b> avec deux AP.</p>
@@ -689,7 +778,6 @@ function compute2Example(){
     <p>S3 (après AP2) : <b>${E} − ${A2} = ${q3} kWh</b> → père <b>${p2}</b> • fils <b>${c2}</b> • petit-fils <b>${g2}</b>.</p>
   `;
 
-  // Ligne de vie
   drawTimeline(document.getElementById('timeline2X'),[
     {tag:"fstart", d:new Date(FS)},
     {tag:"fend",   d:new Date(FE)},
@@ -702,11 +790,8 @@ function compute2Example(){
     {d:new Date((+new Date(da2)+(+new Date(de)))/2),lbl:`S3 : ${pctText(k2p)} % père`}
   ]);
 
-  // Histogramme
   drawStackedPF2(document.getElementById('bars2X'),{
-    q1,q2,q3,
-    p1,c1,p2,c2,g2,
-    ds, da1, da2, de
+    q1,q2,q3,p1,c1,p2,c2,g2, ds, da1, da2, de
   });
 }
 
@@ -730,9 +815,13 @@ window.addEventListener('DOMContentLoaded', ()=>{
   });
   document.getElementById('clear1').addEventListener('click', ()=>{
     [fStart1,fEnd1,dStart1,iStart1,dAP1,iAP1,dEnd1,iEnd1,coef1,price1].forEach(el=>el.value="");
-    document.getElementById('chroniqueLive1').innerHTML=""; timeline1.innerHTML=""; bap1.value="";
+    document.getElementById('chroniqueLive1').innerHTML=""; timeline1.innerHTML=""; bars1.innerHTML=""; bap1.value="";
   });
   document.getElementById('copy1').addEventListener('click', ()=>{ bap1.select(); document.execCommand('copy'); });
+
+  // PF1 vue toggle
+  v1timeBtn.addEventListener('click', ()=>{view1="time"; v1timeBtn.classList.add('active'); v1barsBtn.classList.remove('active'); view1Time.classList.add('active'); view1Bars.classList.remove('active'); compute1();});
+  v1barsBtn.addEventListener('click', ()=>{view1="bars"; v1barsBtn.classList.add('active'); v1timeBtn.classList.remove('active'); view1Bars.classList.add('active'); view1Time.classList.remove('active'); compute1();});
 
   // PF1 exemple (verrouillé)
   compute1Example();
@@ -763,10 +852,14 @@ window.addEventListener('DOMContentLoaded', ()=>{
 
   document.getElementById('copy2').addEventListener('click', ()=>{ bap2.select(); document.execCommand('copy'); });
 
+  // PF2 vue toggle
+  v2timeBtn.addEventListener('click', ()=>{view2="time"; v2timeBtn.classList.add('active'); v2barsBtn.classList.remove('active'); view2Time.classList.add('active'); view2Bars.classList.remove('active'); compute2();});
+  v2barsBtn.addEventListener('click', ()=>{view2="bars"; v2barsBtn.classList.add('active'); v2timeBtn.classList.remove('active'); view2Bars.classList.add('active'); view2Time.classList.remove('active'); compute2();});
+
   // PF2 exemple (verrouillé)
   compute2Example();
 
-  // ⚠️ Pas de préremplissage auto du formulaire PF1 — il reste vide au chargement.
+  // ⚠️ Aucun préremplissage automatique du formulaire PF1 — il reste vide au chargement.
 });
 </script>
 </body>
